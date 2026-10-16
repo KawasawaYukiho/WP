@@ -1,0 +1,54 @@
+python -c "import marshal,dis; f=open('kongbeiqie.pyc','rb'); f.read(16); dis.dis(marshal.load(f))"
+
+1. python -c "..."
+-c 表示后面引号里是直接执行的Python代码，不写文件
+
+2. import marshal, dis
+marshal：Python 内置模块，负责序列化/反序列化 Python 对象，.pyc 文件里的 code object 就是用 marshal 格式存的
+dis：Python 内置反汇编模块，把字节码转成人类可读的指令列表
+
+3. f = open('kongbeiqie.pyc', 'rb')
+以二进制只读方式打开 kongbeiqie.pyc
+'rb' .pyc是二进制文件，read binary
+
+4. f.read(16)
+在前面解包时可以发现是py314，pyc头部为16字节，后面才是python对象
+从文件开头读 16 个字节，然后丢弃
+这 16 字节是 .pyc 文件的头部（magic number + 标志位 + 时间戳/哈希等）
+
+
+.pyc文件结构：
+text
+┌─────────────────────────┐
+│ 头部 (16 字节)          │  ← magic + flags + 时间戳/哈希
+├─────────────────────────┤
+│ marshal 序列化的 code   │  ← 从这里开始才是 Python 对象
+└─────────────────────────┘
+前 4 字节：magic number，标识 Python 版本
+接着 4 字节: py3.7+ 引入,这是一个标志位字段，低4位（flags & 0x0F）表示后续字段的含义
+接着 8 字节：时间戳或源文件哈希
+共 16 字节
+
+所以必须 f.read(16) 跳过头部，否则 marshal.load 读到的是 magic number，会报错
+
+头部不是 marshal 数据，直接 marshal.load 会失败，所以必须先跳过
+注意：这里没有赋值给变量，读出来的 16 字节直接扔了，效果就是“文件指针向后移动 16 字节”
+
+5. marshal.load(f)
+从当前文件指针位置（第 16 字节之后）开始，用 marshal 反序列化
+得到的是一个 code object（模块级别的代码对象）
+这个 code object 里包含了模块的所有字节码、常量、名字等
+
+6. dis.dis(...)
+把上一步得到的 code object 反汇编
+输出就是那一大堆 LOAD_CONST、STORE_NAME、MAKE_FUNCTION这些指令
+
+整体等价于
+python
+import marshal, dis
+
+f = open('kongbeiqie.pyc', 'rb')
+f.read(16)              # 跳过 .pyc 头部
+code = marshal.load(f)  # 反序列化f，并且存在code里面
+dis.dis(code)           # 反汇编，调用 dis 模块里的 dis 函数
+

@@ -1,0 +1,30 @@
+┌──────────────────────────┐  文件开头
+│ DOS Header (64字节)      │  里面 0x3C 处存着 e_lfanew
+│ ┌──────────────────────┐ │
+│ │ "MZ" ...             │ │    MZ（0x4D 0x5A）是 DOS .exe可执行文件的标志头，来自微软员工Mark Zbikowski的名字缩写
+│ │ e_lfanew (4字节) ────┼ |  --指向 PE 头的位置
+│ └──────────────────────┘ │
+├──────────────────────────┤  ← e_lfanew 指向这里
+│ PE Signature "PE\0\0" (4)│
+├──────────────────────────┤
+│ FILE_HEADER (20字节)     │  ← NumberOfSections、SizeOfOptionalHeader 在这
+├──────────────────────────┤
+│ OPTIONAL_HEADER          │  ← 大小由 SizeOfOptionalHeader 决定
+├──────────────────────────┤
+│ SECTION TABLE (节表)     │  ← 每个节 40 字节，共 NumberOfSections 个
+│  节0 节1 ... 节N         │
+├──────────────────────────┤
+│ 节0 原始数据             │
+│ 节1 原始数据             │  ← 真正的代码/数据
+│ ...                      │
+│ 节N 原始数据             │
+├──────────────────────────┤  ← 最后一节结束的地方 = overlay 起点
+│ OVERLAY (附加数据)       │  ← 这就是我们要提取的
+└──────────────────────────┘  文件结尾
+
+e_lfanew 是 PE 文件格式（Windows 可执行文件）里的一个关键字段，全称可以
+理解为 “e_long file address of new EXE header”，即“新 EXE 头部的长文件地址”
+它出现在 DOS 头（IMAGE_DOS_HEADER） 的末尾
+指向 PE 头（IMAGE_NT_HEADERS）在文件中的偏移量
+
+题目中的OVERLAY是要写脚本提取的部分

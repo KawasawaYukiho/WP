@@ -1,0 +1,21 @@
+题目提示，HTTP请求头中藏着一个秘密...... 有东西？不好提取？看看另一个流量包吧
+
+两个流量包，放到wireshark查看，过滤http
+pcap1中发现
+X-password，是base64编码，解码出来是P@ssw0rd2026
+X-password.png
+流量显示获取了一个secret.zip
+GET_secret.png
+还有一部分的.zip流量，后半部分缺失
+
+pcap2中发现了完整的tcp流
+tcp.png
+追踪流进行提取，得到secret.zip
+用前面的密码解压，得到hidden.png
+分析图片隐写
+zsteg发现LSB最低有效位隐写
+得到flag
+Flag{L5B_1s_N0t_H4rd_2_F1nd}
+
+
+

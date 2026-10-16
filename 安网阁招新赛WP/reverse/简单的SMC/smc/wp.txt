@@ -1,0 +1,177 @@
+# teach_smc.exe 逆向 WP（SMC 自修改代码）
+
+---
+
+## 第一步：DIE 查壳
+
+用 **DIE (Detect It Easy)** 打开 `teach_smc.exe`：
+
+- 文件类型：PE32 (32位)
+- 编译器：Microsoft Visual C++ (MinGW/GCC)
+- 链接方式：动态链接
+- 导入表关键函数：
+  - `VirtualProtect` —— 典型 SMC（Self-Modifying Code）特征
+  - `__stdio_common_vfscanf` —— 读取用户输入
+  - `__stdio_common_vfprintf` —— 输出结果
+
+DIE 字符串中可以看到 `good!`，说明程序里确实有这个成功提示。
+
+**结论：这是一个 SMC 自修改程序，代码在运行时才解密。**
+
+---
+
+## 第二步：IDA 静态分析
+
+### 2.1 找到入口点和 main
+
+IDA 打开后，入口点 `0x401463`。顺着调用链找到 main 函数（约 `0x4012F0` 附近）。
+
+### 2.2 发现 SMC 解密函数
+
+在 `0x4010B0` 处有一个可疑函数：
+
+```asm
+push ebp
+mov  ebp, esp
+sub  esp, 0xC
+mov  eax, dword ptr [0x403040]   ; 栈溢出 cookie
+xor  eax, ebp
+mov  [ebp-4], eax
+
+lea  eax, [ebp-8]
+push eax
+push 0x40                        ; PAGE_EXECUTE_READWRITE
+push 0x1000                      ; 大小 4KB
+push 0x401080                    ; 目标地址：.text 段内！
+call [VirtualProtect]            ; 把 0x401080 改成可写可执行
+
+mov  [ebp-0xC], 0               ; i = 0
+jmp  loop_check
+
+loop_body:
+mov  ecx, [ebp-0xC]
+add  ecx, 1
+mov  [ebp-0xC], ecx
+
+loop_check:
+cmp  [ebp-0xC], 0x24            ; 循环 0x24 = 36 次
+jge  loop_end
+
+mov  edx, 0x401080
+add  edx, [ebp-0xC]             ; edx = &encrypted[i]
+movsx eax, byte ptr [edx]
+xor  eax, 0x90                  ; 每个字节 XOR 0x90
+mov  ecx, 0x401080
+add  ecx, [ebp-0xC]
+mov  [ecx], al                  ; 写回原地址
+
+jmp  loop_body
+
+loop_end:
+push 0
+push 0
+call [exit]
+```
+
+**这个函数做了三件事：**
+1. 用 `VirtualProtect` 把 `.text` 段中 `0x401080` 开始的 4KB 改成可写
+2. 循环 36 次，把 `0x401080` 开始的每个字节和 `0x90` 做 XOR
+3. 解密完成后调用 `exit`（说明这是一个独立的解密 stub）
+
+### 2.3 手动解密 0x401080 处的代码
+
+IDA 里看到 `0x401080` 处的原始（加密）字节：
+
+```
+0x401080:  C5 1B 7C C1 11 ED 98 A9 A0 90 90 E5 99 57 D5 6C
+0x401090:  91 90 90 90 7B 97 57 D5 6C 90 90 90 90 1B D5 6C
+0x4010A0:  1B 75 CD 53
+```
+
+每个字节 XOR `0x90`：
+
+```
+C5^90 = 55    1B^90 = 8B    7C^90 = EC    C1^90 = 51
+11^90 = 81    ED^90 = 7D    98^90 = 08    A9^90 = 39
+A0^90 = 30    90^90 = 00    90^90 = 00    E5^90 = 75
+99^90 = 09    57^90 = C7    D5^90 = 45    6C^90 = FC
+91^90 = 01    90^90 = 00    90^90 = 00    90^90 = 00
+7B^90 = EB    97^90 = 07    57^90 = C7    D5^90 = 45
+6C^90 = FC    90^90 = 00    90^90 = 00    90^90 = 00
+90^90 = 00    1B^90 = 8B    D5^90 = 45    6C^90 = FC
+1B^90 = 8B    75^90 = E5    CD^90 = 5D    53^90 = C3
+```
+
+解密后的汇编：
+
+```asm
+; 函数 sub_401080(int input)
+push ebp
+mov  ebp, esp
+push ecx
+cmp  dword ptr [ebp+8], 0x3039   ; input == 12345 ?
+jne  short loc_40109B
+mov  [ebp-4], 1                   ; 相等 → 返回 1
+jmp  short loc_4010A4
+
+loc_40109B:
+mov  [ebp-4], 0                    ; 不等 → 返回 0
+
+loc_4010A4:
+mov  eax, [ebp-4]
+mov  esp, ebp
+pop  ebp
+ret
+```
+
+**关键发现：`0x3039 = 12345`**
+
+这个解密后的函数就是答案校验函数——判断输入是否等于 12345。
+
+### 2.4 确认输入输出
+
+在 `.data` 段 (`0x403000`) 看到：
+- `"%d"` —— 说明用 `scanf("%d", ...)` 读入一个整数
+- `"good!"` —— 成功提示
+
+main 函数流程：
+1. `scanf("%d", &input)` 读入整数
+2. 调用解密后的 `sub_401080(input)`
+3. 返回值为真 → `printf("good!")`
+4. 返回值为假 → 无输出（或其他提示）
+
+---
+
+## 第三步：验证
+
+命令行运行：
+
+```
+> teach_smc.exe
+12345
+good!
+```
+
+输入 `12345`，程序输出 `good!`，验证成功。
+
+---
+
+## Flag
+
+```
+AWGCTF{12345}
+```
+
+---
+
+## 总结
+
+| 步骤 | 工具 | 发现 |
+|------|------|------|
+| 1 | DIE | 识别 PE32，导入 VirtualProtect → SMC 特征 |
+| 2 | IDA | 找到 SMC 解密函数（VirtualProtect + XOR 0x90） |
+| 3 | IDA | 手动 XOR 解密 0x401080 处 36 字节代码 |
+| 4 | IDA | 解密后是 `cmp input, 0x3039` → 答案是 12345 |
+| 5 | 运行 | 输入 12345，输出 good!，验证通过 |
+
+**SMC 题核心思路：** 程序在运行时才把加密的代码解密出来执行。静态分析时看到的是乱码，需要找到解密例程（通常是 VirtualProtect + XOR/循环），手动模拟解密过程，再分析解密后的真实代码逻辑。

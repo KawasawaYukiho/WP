@@ -1,0 +1,115 @@
+============================================================
+  安网阁招新赛 WP —— 一个普通的 APK（mobile）
+  附件：app-debug.apk
+============================================================
+
+【题目描述】
+一个普通的 APK 文件。
+（考察 jadx 工具的使用）
+
+
+【解题步骤】
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+步骤 1：用 jadx 反编译 APK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  $ jadx-gui app-debug.apk
+
+或者命令行：
+
+  $ jadx app-debug.apk -d output_dir/
+
+jadx 会把 APK 反编译成 Java 源码 + 资源文件。
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+步骤 2：找到主 Activity
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+在 jadx 左侧导航栏中找到：
+  com.example.ezapk → MainActivity
+
+或者直接搜索关键字：
+  - inputFlag（输入框）
+  - check（校验方法）
+  - CIPHER（加密数组）
+  - KEY（密钥）
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+步骤 3：分析 MainActivity 源码
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+反编译后核心代码（Kotlin 等价）：
+
+  class MainActivity : AppCompatActivity() {
+      companion object {
+          // 38 个 int，存储了加密后的数据
+          val CIPHER = intArrayOf(
+              0x3ee, 0x3e4, 0x3e9, 0x3ef, 0x3f3, 0x3e2, 0x3e9, 0x3ec,
+              0x3f0, 0x3d7, 0x3fa, 0x3bb, 0x3fe, 0x3bb, 0x3fa, 0x3fb,
+              0x3b9, 0x3e6, 0x3ef, 0x3d7, 0x3e5, 0x3bc, 0x3fb, 0x3fc,
+              0x3bb, 0x3fa, 0x3d7, 0x3b8, 0x3fa, 0x3d7, 0x3bc, 0x3e6,
+              0x3ec, 0x3fa, 0x3b8, 0x3b9, 0x3ec, 0x3f5
+          )
+      }
+
+      fun check(input: String): Boolean {
+          // 第一步：长度必须等于 38
+          if (input.length != CIPHER.size) return false
+
+          // 第二步：逐字符 XOR 校验
+          for (i in input.indices) {
+              if ((input[i].code xor 904) != CIPHER[i]) {
+                  return false
+              }
+          }
+          return true
+      }
+  }
+
+关键发现：
+  - 校验算法很简单：input[i] XOR 904 == CIPHER[i]
+  - 反过来就是：input[i] = CIPHER[i] XOR 904
+  - 密钥是固定的 904（0x388）
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+步骤 4：Python 解密
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  cipher = [
+      0x3ee, 0x3e4, 0x3e9, 0x3ef, 0x3f3, 0x3e2, 0x3e9, 0x3ec,
+      0x3f0, 0x3d7, 0x3fa, 0x3bb, 0x3fe, 0x3bb, 0x3fa, 0x3fb,
+      0x3b9, 0x3e6, 0x3ef, 0x3d7, 0x3e5, 0x3bc, 0x3fb, 0x3fc,
+      0x3bb, 0x3fa, 0x3d7, 0x3b8, 0x3fa, 0x3d7, 0x3bc, 0x3e6,
+      0x3ec, 0x3fa, 0x3b8, 0x3b9, 0x3ec, 0x3f5
+  ]
+  key = 904  # 0x388
+  flag = ''.join(chr(c ^ key) for c in cipher)
+  print(flag)
+
+输出：flag{jadx_r3v3rs1ng_m4st3r_0r_4ndr01d}
+
+
+【最终 Flag】
+------------------------------------------------------------
+flag{jadx_r3v3rs1ng_m4st3r_0r_4ndr01d}
+------------------------------------------------------------
+
+
+【考点总结】
+- jadx 反编译 APK，定位 MainActivity
+- 分析 check() 方法的校验逻辑
+- 发现 XOR 加密，密钥 904
+- 反推：CIPHER[i] XOR 904 = 原始字符
+- 不需要运行 APP，纯静态分析即可拿到 flag
+
+
+【常用工具】
+- jadx-gui    : 图形化反编译，最常用
+- jadx        : 命令行批量反编译
+- apktool     : 解资源文件、AndroidManifest
+- androguard  : Python 库，脚本化分析
+- frida       : 动态调试，Hook check 方法

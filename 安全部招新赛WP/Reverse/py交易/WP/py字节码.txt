@@ -1,0 +1,126 @@
+PS F:\招新赛的WP\安全部招新赛WP\py交易\danke.exe_extracted> python -c "import marshal,dis; f=open('kongbeiqie.pyc','rb'); f.read(16); dis.dis(marshal.load(f))"
+  0           RESUME                   0         code object开头的固定指令，标记函数/模块开始执行
+
+  1           LOAD_CONST               0 ('')
+              STORE_NAME               0 (flag)
+
+  2           LOAD_CONST               1 ('YVYh]\x07@h\x0ehRwJVD\x07]s\x03D__ELzhY\x06_TP')
+              STORE_NAME               1 (encode)
+
+  3           LOAD_CONST               9 ((19, 14, 10, 24, 27, 6, 5, 12, 
+                                          11, 15, 9, 26, 30, 22, 16, 28, 1, 13, 18, 2, 17, 21, 29, 4, 25, 7, 8, 23, 0, 3, 20))
+              STORE_NAME               2 (table)    table：一个 31 个元素的
+                                                    置换表，用来打乱字符顺序
+
+  4           LOAD_SMALL_INT          55
+              STORE_NAME               3 (XOR_KEY)
+
+  7           LOAD_CONST               2 (<code object enc at 0x0000019CA3F762B0, file "kongbeiqie.py", line 7>)    把编译好的enc的 code object 压栈
+              MAKE_FUNCTION
+              STORE_NAME               4 (enc)          此处定义enc函数
+
+ 14           LOAD_NAME                5 (__name__)
+              LOAD_CONST               3 ('__main__')
+              COMPARE_OP              88 (bool(==))
+              POP_JUMP_IF_FALSE       74 (to L3)          # 比较__name__和__main__,不相等就跳到 L3（直接结束）
+              NOT_TAKEN
+
+ 15           LOAD_NAME                6 (print)
+              PUSH_NULL
+              LOAD_CONST               4 ('Please input your flag:')
+              CALL                     1
+              POP_TOP
+
+ 16           LOAD_NAME                7 (input)
+              PUSH_NULL
+              CALL                     0
+              STORE_NAME               0 (flag)   # flag = input()
+
+ 17           LOAD_NAME                8 (len)
+              PUSH_NULL
+              LOAD_NAME                0 (flag)
+              CALL                     1             # len(flag)
+              LOAD_SMALL_INT          31             
+              COMPARE_OP             119 (bool(!=))  # len(flag) != 31
+              POP_JUMP_IF_FALSE       11 (to L1)      # 如果相等，跳转到L1，不相等就继续往下走
+              NOT_TAKEN   
+
+ 18           LOAD_NAME                6 (print)    
+              PUSH_NULL
+              LOAD_CONST               5 ('Length Wrong!!')
+              CALL                     1
+              POP_TOP
+              LOAD_CONST               8 (None)
+              RETURN_VALUE                                # 打印Length Wrong!!后，直接返回
+
+ 20   L1:     LOAD_NAME                4 (enc)          #此处为L1开始
+              PUSH_NULL
+              LOAD_NAME                0 (flag)            
+              CALL                     1                   # enc(flag)
+              STORE_NAME               9 (final)           # 弹出栈顶，存进名字表下标 9 的变量 final，final = enc(flag)
+
+ 21           LOAD_NAME                9 (final)
+              LOAD_NAME                1 (encode)
+              COMPARE_OP              88 (bool(==))
+              POP_JUMP_IF_FALSE       11 (to L2)          # 比较final和encode，如果相等继续走，不相等就跳转L2
+              NOT_TAKEN
+
+ 22           LOAD_NAME                6 (print)
+              PUSH_NULL
+              LOAD_CONST               6 ('Wow,you get the right flag!!')
+              CALL                     1
+              POP_TOP
+              LOAD_CONST               8 (None)
+              RETURN_VALUE                                # 输入正确flag后，打印Wow,you get the right flag!!
+
+ 24   L2:     LOAD_NAME                6 (print)
+              PUSH_NULL
+              LOAD_CONST               7 ('Sorry,Your input is Wrong')
+              CALL                     1
+              POP_TOP
+              LOAD_CONST               8 (None)
+              RETURN_VALUE
+
+ 14   L3:     LOAD_CONST               8 (None)
+              RETURN_VALUE                            # L3，直接退出
+
+Disassembly of <code object enc at 0x0000019CA3F762B0, file "kongbeiqie.py", line 7>:       以下为enc函数的定义
+  7           RESUME                   0          # 函数入口
+
+  8           LOAD_CONST               0 ('')
+              STORE_FAST               1 (tmp)    # tmp = ''  空串，存在"快速局部变量数组"里，下标 1
+
+  9           LOAD_GLOBAL              1 (range + NULL)     # [range, NULL]
+              LOAD_GLOBAL              3 (len + NULL)       # [range, NULL, len, NULL]
+              LOAD_FAST_BORROW         0 (input)            # [range, NULL, len, NULL, input]
+              CALL                     1                    #从栈顶弹 1 + 1 + 1 = 3 个，构造len(input)
+              CALL                     1                    #再次弹3个，构造range(len(input))
+              GET_ITER                                      # range(len(input))，栈[<range_iter>]
+      L1:     FOR_ITER                59 (to L2)            循环头，当循环结束跳转到L2，这里既是"取下一个值"，也是"条件判断"
+              STORE_FAST               2 (i)      i当前值          
+                                                          以下为循环体
+ 10           LOAD_FAST_BORROW         1 (tmp)          
+              LOAD_GLOBAL              5 (chr + NULL)
+              LOAD_GLOBAL              7 (ord + NULL)         栈 [<range_iter>, tmp, chr, NULL, ord, NULL]
+              LOAD_FAST_BORROW         0 (input)              
+              LOAD_GLOBAL              8 (table)              继续压input，table
+              LOAD_FAST_BORROW         2 (i)                  压i，下面两个 BINARY_OP 26 ([]) 就是两次下标访问
+              BINARY_OP               26 ([])                 [..., input, table[i]]
+              BINARY_OP               26 ([])                 [..., input[table[i]]]
+              CALL                     1                      调用ord，[<range_iter>, tmp, chr, NULL, ord(input[table[i]])]
+              LOAD_GLOBAL             10 (XOR_KEY)
+              BINARY_OP               12 (^)                  将XOR_KEY与ord(input[table[i]])进行异或运算
+              CALL                     1                      调用chr(),[<range_iter>, tmp, chr(...)]
+              BINARY_OP                0 (+)                  [<range_iter>, tmp + chr(...)]
+              STORE_FAST               1 (tmp)                结果存回tmp里面，
+              JUMP_BACKWARD           61 (to L1)              回到L1，栈[<range_iter>]，开始下一轮
+
+  9   L2:     END_FOR
+              POP_ITER            # 循环结束，清理
+
+ 11           LOAD_FAST_BORROW         1 (tmp)
+              RETURN_VALUE                      # return 
+              
+
+              理清了上面的内容，我们就可以写出输入的flag的判断部分，encrypt.py,从而进一步反推出
+              encode里YVYh]\x07@h\x0ehRwJVD\x07]s\x03D__ELzhY\x06_TP藏的正确的flag，写solve.py

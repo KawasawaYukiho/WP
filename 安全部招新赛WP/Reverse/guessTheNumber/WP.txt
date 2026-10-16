@@ -1,0 +1,49 @@
+GuessTheNumber
+解压附件得到一个exe文件,直接cmd里运行看看(cmd里运行是为了避免程序运行结束后窗口立即被销毁，看不到输出的结果)
+结合题目的提示
+How to guess a number you do not know
+6次机会，让我们猜一个1~100的数
+用二分法猜，最多需要7次，而题目只给6次
+我们尝试猜大于100或小于1的数，不行
+一次输入多个值，用space隔开，无特殊
+考虑标准地用二分法来猜，在cmd里面运行程序，会发现当使用完次数或者猜到正确的数，都会返回GUET{Th1s_1s_Th3_FAKE_f1@g}，尝试提交，flag错误
+guess_fault.png    guess_right.png
+
+于是就可以开始正常的逆向流程，先用DIE查壳，发现是一个64位无壳的普通.exe，用ida64打开，寻找main或者start函数
+
+DIE.png
+
+在start函数里面直接shift+F12，会直接跳转到下面这串字符串，而且在string里面只有这一串长hex字符串
+7821352D093A1B6C39011A3B2844200C2B024A335231706F5E002D1801174C000
+在140001014函数被引用了
+xref2.png
+直接随波逐流解码，无有效信息显然是加密了
+
+hex_string.png
+
+发现提示H0w_t0_3ncrypt?"如何加密"考虑找加密相关内容
+直接找140001014函数，看伪代码，发现这是一个验证函数
+a1 == 51966才会执行该函数，而程序里根本就没有调用这个函数
+donotuse.png
+只需要读懂它的算法，然后逆向
+
+v2 = aH0wT03ncrypt[14 - i % 0xF] ^ *(_BYTE *)(i + a2); //发现^异或加密代码
+
+aH0wT03ncrypt代表"H0w_t0_3ncrypt?"
+'0xF'字符串长度15，刚刚好就是"H0w_t0_3ncrypt?"的长度
+"i % 15"给i循环取模，[14 - i % 0xF]把"H0w_t0_3ncrypt?"从后面往前取
+"*(_BYTE *)(i + a2) — a2"是输入字符串的指针，a2 + i就是第i个字符，取一个字节的值，也就是a2[i]
+可以看出来H0w_t0_3ncrypt?倒转后直接参与了XOR的运算
+
+140001040函数接收一个字符串，XOR加密后和hex字符串比较
+根据hex = flag XOR key
+就有flag = hex XOR key
+
+
+写py脚本逆向异或，得到flag
+enc = bytes.fromhex("7821352D093A1B6C39011A3B2844200C2B024A335231706F5E002D1801174C00021C130E13")
+key = b"H0w_t0_3ncrypt?"[::-1]  #伪代码里下标是14 - i % 15，即从字符串末尾往前取字符，等价于把字符串反转后循环使用
+flag = bytes([enc[i] ^ key[i % 15] for i in range(37)])
+print(flag.decode())
+最终flag
+GUET{Yu_f1nd_th3_r3A1_C0ntro1_stream}

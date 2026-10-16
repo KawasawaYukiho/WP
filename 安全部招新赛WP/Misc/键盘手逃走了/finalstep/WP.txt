@@ -1,0 +1,30 @@
+在dist里观察,用binwalk检查各个图片,发现除了Viola.png,其他的图片都没有返回内容,且Viola.png的数据有2.6MB
+重点查看Viola.png
+用foremost
+foremost -i Desktop/dist/Viola.jpg -o Desktop/extract
+提取得到了extract的文件夹
+
+用https://aperisolve.fr/
+逐项检查jpg,png的文件夹,发现无异样
+
+检查zip里的Viola_2.png时,发现有压缩包隐藏
+010editer提取后,发现并无有效信息
+在2.txt中
+
+/*
+从 Viola_1.jpg 里抠出来的，是 Miyako 和一个「上锁」的压缩包。
+排练照背面用铅笔写着：透过外表看到她的内心，密码就藏在像素的最低位。
+临走前她嘟囔了一句：「那锁我只是随手一扣，根本没锁严——逗你玩的啦～」
+*/
+
+先考虑LSB隐写,但是并未发现有效信息
+后面又说到"随手一扣，根本没锁严",考虑伪加密
+发现的确是伪加密
+在修复了所有的标志位后,解压
+
+得到了ctfer.png
+想到前面的提示"图片被切开"还有Viola_3.png里提到了crc crying"，所以考虑crc检验
+发现crc校验码错误，所以修复后得到了fixed.png
+观察格式flag_dream{114514_1919_810}
+所以在fixed_ctfer.png的信息加上   '_' 横杠
+提交得到flag_dream{welcome_to_guetsec_ctfer}

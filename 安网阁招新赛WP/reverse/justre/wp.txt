@@ -1,0 +1,130 @@
+# challenge.exe 逆向 WP
+
+## 题目信息
+- 考察点：密码学（Base64 + 凯撒）、IDA 使用、写脚本
+- 文件：challenge.exe（PE32+，MinGW GCC 15.2.0 编译）
+
+## 解题步骤
+
+### 1. strings 提取关键信息
+
+```
+yDw8FiGnFNYkG7q0ug9iFNmoxfezFfUoDiX=
+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/
+Please enter your answer:
+the len is wrong!
+Wrong!!
+Great!!!
+```
+
+函数名：`init_before_main`、`caesar_shift_table`、`b64_decode`、`b64_value`、`b64_cipher`、`crypto`、`main`
+
+### 2. 程序逻辑分析
+
+运行程序，输入任意长度不是 26 的字符串，输出 `the len is wrong!`。
+输入 26 个字符，输出 `Wrong!!`。
+
+用 IDA 反汇编 `crypto` 函数（.text+0x1a60），核心逻辑：
+
+```
+; 读取输入，检查长度 == 26
+cmp rax, 0x1a
+jne len_wrong
+
+; 前 16 字节用 SSE 指令批量处理
+movd xmm0, 0x09090909
+pshufd xmm0, xmm0, 0       ; xmm0 = 16 个 0x09
+paddb xmm0, [rsp+0x20]     ; 每个字节 +9
+movd xmm1, 0x12121212
+pshufd xmm1, xmm1, 0       ; xmm1 = 16 个 0x12
+pxor xmm0, xmm1             ; 每个字节 XOR 0x12
+movaps [rsp+0x20], xmm0
+
+; 后 10 字节循环处理
+loop:
+movzx eax, byte ptr [rdx+0x10]
+add eax, 9
+xor eax, 0x12
+mov [rdx+0xf], al
+add rdx, 1
+cmp rdx, r8
+jne loop
+```
+
+**加密算法：每个字节 = (input + 9) ^ 0x12**
+
+### 3. init_before_main 分析
+
+`init_before_main`（.text+0x1440）在程序启动时运行，它对 **Base64 字母表** 做凯撒移位：
+
+- 大写字母 A-Z：+7 位（A→H, B→I, ..., Z→G）
+- 小写字母 a-z：-7 位（a→t, b→u, ..., z→g，即 +19 mod 26）
+- 数字和 +/ 不变
+
+修改后的 Base64 表：
+```
+标准表：ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/
+修改后：HIJKLMNOPQRSTUVWXYZABCDEFGtuvwxyzabcdefghijklmnopqrs0123456789+/
+```
+
+### 4. 解密脚本
+
+```python
+import base64
+
+ct = 'yDw8FiGnFNYkG7q0ug9iFNmoxfezFfUoDiX='
+std_table = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+
+# 构建修改后的 Base64 表（凯撒移位）
+mod_table = ''
+for c in std_table:
+    if 'A' <= c <= 'Z':
+        mod_table += chr((ord(c) - ord('A') + 7) % 26 + ord('A'))
+    elif 'a' <= c <= 'z':
+        mod_table += chr((ord(c) - ord('a') - 7) % 26 + ord('a'))
+    else:
+        mod_table += c
+
+# 用修改后的表解码
+bits = []
+for c in ct:
+    if c == '=':
+        break
+    bits.append(mod_table.index(c))
+
+# 6-bit 转字节
+result = bytearray()
+for i in range(0, len(bits) - 3, 4):
+    chunk = bits[i:i+4]
+    b0 = (chunk[0] << 2) | (chunk[1] >> 4)
+    b1 = ((chunk[1] & 0xf) << 4) | (chunk[2] >> 2)
+    b2 = ((chunk[2] & 0x3) << 6) | chunk[3]
+    result.extend([b0, b1, b2])
+chunk = bits[-3:]
+b0 = (chunk[0] << 2) | (chunk[1] >> 4)
+b1 = ((chunk[1] & 0xf) << 4) | (chunk[2] >> 2)
+result.extend([b0, b1])
+
+# 反向运算：input = ((result ^ 0x12) - 9) & 0xff
+flag = ''
+for b in result:
+    val = ((b ^ 0x12) - 9) & 0xff
+    flag += chr(val)
+
+print(flag)
+```
+
+### 5. 结果
+
+```
+flag{simple_script_right?}
+```
+
+提交验证：运行程序输入 `flag{simple_script_right?}`，输出 `Great!!!`。
+
+## 总结
+1. strings 提取密文和函数名
+2. IDA 反汇编 crypto 函数，发现 (byte + 9) ^ 0x12 的变换
+3. 分析 init_before_main，发现 Base64 表被凯撒移位（大写+7，小写-7）
+4. 用修改后的 Base64 表解码密文，再反推加法和 XOR
+5. 得到 flag

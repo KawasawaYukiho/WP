@@ -1,0 +1,37 @@
+__int64 caesar_shift_table()
+{
+  char *v0; // rdx
+  char *v1; // rcx
+  __int64 result; // rax
+
+  v0 = b64_table;
+  v1 = &b64_table[64];
+  do
+  {
+    while ( 1 )
+    {
+      result = (unsigned __int8)*v0;
+      if ( (unsigned __int8)(result - 65) > 0x19u )
+        break;
+      result = ((int)result - 58) % 0x1Au + 65;
+      *v0 = result;
+LABEL_3:
+      if ( v1 == ++v0 )
+        return result;
+    }
+    if ( (unsigned __int8)(result - 97) > 0x19u )
+    {
+      if ( (unsigned __int8)(result - 48) <= 9u )
+      {
+        result = ((int)result - 44) % 0xAu + 48;
+        *v0 = result;
+      }
+      goto LABEL_3;
+    }
+    ++v0;
+    result = ((int)result - 78) % 0x1Au + 97;
+    *(v0 - 1) = result;
+  }
+  while ( v1 != v0 );
+  return result;
+}

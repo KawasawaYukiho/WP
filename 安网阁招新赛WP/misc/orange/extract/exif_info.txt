@@ -1,0 +1,4 @@
+EXIF Data:
+  Camera Make: 0232
+  DateTimeOriginal: 2026:08:01 11:45:14
+  DateTime: 2026:06:08 19:20:00

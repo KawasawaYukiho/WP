@@ -1,0 +1,108 @@
+============================================================
+  安网阁招新赛 WP —— simplebase（reverse）
+  附件：simplebase（ELF 64-bit）
+============================================================
+
+【题目描述】
+极其简单的 Base64，前提是你真的搞懂了 Base64。
+
+
+【解题步骤】
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+步骤 1：file 检测文件类型
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  $ file Desktop/simplebase
+  Desktop/simplebase: ELF 64-bit LSB pie executable, x86-64,
+  version 1 (SYSV), dynamically linked, interpreter
+  /lib64/ld-linux-x86-64.so.2, BuildID[...], for GNU/Linux 3.2.0,
+  stripped
+
+这是一个 Linux 下的 64 位 ELF 可执行文件，strip 过。
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+步骤 2：strings 提取关键字符串
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  $ strings simplebase | grep -E "flag|==|NOPQ|wrong"
+
+关键输出：
+  DIqUD1ETr3AcGKNkZ19PLKAyAwEsAIELHx1nFSH2IwyGsD==
+  This is flag!!
+  This is wrong
+  NOPQRSTUVWXYZABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklm0123456789+/
+
+三行关键信息：
+  1. 密文：DIqUD1ETr3AcGKNkZ19PLKAyAwEsAIELHx1nFSH2IwyGsD==
+  2. 成功提示：This is flag!!
+  3. 自定义 Base64 字符表：NOPQRSTUVWXYZ...+/
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+步骤 3：分析自定义 Base64 表
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+标准 Base64 表：
+  ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/
+
+题目给的表：
+  NOPQRSTUVWXYZABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklm0123456789+/
+
+对比发现：大写字母部分是 ROT13 偏移（N→A, O→B, ..., M→Z），
+小写字母部分同理（n→a, o→b, ..., m→z），数字和 +/ 位置不变。
+
+也就是说：密文中的每个字符，按自定义表查到它的位置 i，
+再用标准表第 i 个字符替换，就是标准 Base64 编码。
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+步骤 4：映射并解码
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+密文：DIqUD1ETr3AcGKNkZ19PLKAyAwEsAIELHx1nFSH2IwyGsD==
+
+逐字符映射（自定义表位置 → 标准表字符）：
+  D → Q    I → V    q → d    U → F    D → Q
+  1 → R    E → E    T → F    r → c    3 → t
+  A → N    c → p    G → T    K → X    N → A
+  k → n    Z → M    1 → R    9 → y    P → C
+  L → Y    K → X    A → N    y → l    A → N
+  w → j    E → E    s → f    A → N    I → I
+  E → E    L → Y    H → U    x → k    1 → R
+  n → a    F → S    S → F    H → U    2 → 6
+  I → I    w → j    y → l    G → T    s → f
+
+映射后：QVdHQ1RGe3NpTXAxM19CYXNlNjRfNVRYUk1aSFU2VjlTfQ==
+
+标准 Base64 解码：
+  AWGCTF{siMp13_Base64_5TXRMZHU6V9S}
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+步骤 5：Python 一键脚本
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  import base64
+
+  custom = 'NOPQRSTUVWXYZABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklm0123456789+/'
+  std    = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+  ct = 'DIqUD1ETr3AcGKNkZ19PLKAyAwEsAIELHx1nFSH2IwyGsD=='
+
+  ct_clean = ct.rstrip('=')
+  mapped = ''.join(std[custom.index(c)] for c in ct_clean)
+  mapped += '=' * (len(ct) - len(ct_clean))
+  print(base64.b64decode(mapped).decode())
+
+
+【最终 Flag】
+------------------------------------------------------------
+AWGCTF{siMp13_Base64_5TXRMZHU6V9S}
+------------------------------------------------------------
+
+
+【考点】
+- Base64 编码原理：6 位一组查表，不是简单替换
+- 自定义字符表（换表）：理解"位置"和"字符"的映射关系
+- strings 快速提取关键信息，不需要反编译

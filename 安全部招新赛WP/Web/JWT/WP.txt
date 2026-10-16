@@ -1,0 +1,25 @@
+
+题目JWT,即json web token
+
+开启实例后先F12观察源代码
+
+并没有发现对username有什么要求,先填一个admin    然后密码乱填看结果
+没有有效信息
+
+继续看源代码,发现了
+<!-- maybe... int(time.time()) - int(password) < 5 -->
+在py里.第一个time提供时间相关的函数,第二个time返回当前 Unix 时间戳
+
+意思是  当前时间戳和提交的int(password)的差值要 < 5
+
+ 
+在控制台输入
+
+document.getElementById("password").value = Math.floor(Date.now() / 1000);  
+document.querySelector("form").submit();		//一键搜索form表单并提交
+
+# JS里没有能直接返回秒时间戳的原生函数,用now,因为now()取的是毫秒的时间戳,所以要除1000获得单位是秒的时间戳,floor的作用是把now()的小数去掉，取比它小的最大整数
+
+回车发现页面跳动,有Login success的字样,重新在开发者工具里找,发现在network里的ctf.guetsec.cn出现了变化,cookie里出现token
+回想题目的JWT提示,把token拿到网站jwt.io里解析,发现了gift的内容全大写字母,数字,以====结尾,是有规律的base32编码
+在随波逐流里一键解码,得到 flag{0c7f502d-f954-4e21-941c-8b904cc55bd0}

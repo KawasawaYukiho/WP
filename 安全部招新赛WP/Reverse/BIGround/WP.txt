@@ -1,0 +1,13 @@
+解压得到BigRound.exe文件
+
+每次点击转动转盘，会更新积分，然后判断积分是否≥100000，满足条件应该会输出 flag
+
+用 7-Zip 右键打开查看内部文件，没有Electron打包的标志性的'resources/app.asar'
+于是考虑用Cheat Engine直接修改内存
+在CE中输入1337扫描,只有一个内存地址
+直接把value=1337改成100000,最后再在exe里转一次转盘刷新一下,得到flag
+GUET{H0w_t0_U5e_D3bugger_0r_1DA}
+
+
+
+

@@ -1,0 +1,79 @@
+; x86-64, Intel syntax
+; rdi points to output buffer
+; 虽然ai读汇编很快但我们希望你尽量用肉眼和手敲推出来，看不懂的指令先查再做
+
+start:
+    lea     rdi, [buf]
+
+    lea     rsi, [byte_404000]
+    mov     ecx, 19
+
+loc_401000:
+    mov     al, byte ptr [rsi]
+    mov     byte ptr [rdi], al
+    inc     rsi
+    inc     rdi
+    loop    loc_401000
+
+    mov     eax, 0x2a
+    add     eax, 0x16
+    cmp     eax, 0x40
+    jne     loc_401080
+
+    mov     ebx, 0x10
+    shl     ebx, 2
+    cmp     eax, ebx
+    jne     loc_401080
+
+    mov     ecx, 0x39
+    sub     ecx, 0x20
+    cmp     ecx, 0x18
+    jg      loc_401050
+
+    jmp     loc_401080
+
+loc_401050:
+    lea     rsi, [byte_404020]
+    mov     ecx, 31
+
+loc_401060:
+    mov     al, byte ptr [rsi]
+    xor     al, 0x42
+    mov     byte ptr [rdi], al
+    inc     rsi
+    inc     rdi
+    loop    loc_401060
+
+    jmp     loc_4010b0
+
+loc_401080:
+    lea     rsi, [byte_404030]
+    mov     ecx, 9
+
+loc_401090:
+    mov     al, byte ptr [rsi]
+    mov     byte ptr [rdi], al
+    inc     rsi
+    inc     rdi
+    loop    loc_401090
+
+loc_4010b0:
+    mov     byte ptr [rdi], 0
+    ret
+
+
+byte_404000:
+    db 0x66, 0x6c, 0x61, 0x67, 0x7b, 0x55, 0x6e, 0x64, 0x65, 0x72
+    db 0x73, 0x74, 0x61, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x5f
+
+byte_404020:
+    db 0x23, 0x31, 0x31, 0x27, 0x2f, 0x20, 0x2e, 0x3b, 0x1d, 0x2e
+    db 0x23, 0x2c, 0x25, 0x37, 0x23, 0x25, 0x27, 0x1d, 0x2b, 0x31
+    db 0x1d, 0x2b, 0x2f, 0x32, 0x2d, 0x30, 0x36, 0x23, 0x2c, 0x36
+    db 0x3f
+
+byte_404030:
+    db 0x63, 0x6f, 0x72, 0x72, 0x65, 0x63, 0x74, 0x21, 0x7d
+
+buf:
+    db 64 dup(0)

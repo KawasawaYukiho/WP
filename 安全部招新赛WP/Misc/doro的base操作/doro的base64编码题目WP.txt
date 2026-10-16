@@ -1,0 +1,130 @@
+doro的base64编码题目WP
+欧润吉和欧润吉色都是orange，RG9ybw==和RG9ybg==都是doro，这里面肯定有什么不一样的地方
+加个提示：南北绿豆是个自定义的四进制编码，解出来就是带GUET{的flag
+再加个提示：flag分成两个部分，中间用下划线_连接
+
+解压压缩包,得到一个.docm后缀的文件
+需要知道docm和docx的差别
+//宏就是写在 Office 文档里面的一段自动执行的小程序，语言是VBA
+docx标准的word文档，不能存放VBA宏
+docm启用宏的 Word 文档，往往存放VBA宏
+
+先点开文档,会弹出word文档的宏的安全提示,发现四个重叠的图片
+扫码第一张发现"我脸上有字吗?"的字样,考虑图片隐写,另外三张一样通过图片隐写的全面检查
+1.元数据隐写 exiftool
+2.图片本身视觉隐写
+3.LSB最低有效位隐写
+4.文件拼接隐写 binwalk
+5.CRC校验
+6.XXX
+应该可以用https://aperisolve.fr/一次性扫描
+并没有发现什么有效信息,第四张图片是一个相对复杂的二维码
+识别二维码得到一串标准base64的编码
+可以发现只有末尾有变化,而前面解码得到Is this just a base64_encode?
+而末尾的4种字符,显然符合题目的4进制编码的意思,且为base64隐写,考虑隐写的原理
+
+最后一个Base64字符的6bit里面,只有前4bit用来还原明文;
+最后2bit是编码时补的0，解码的时候会丢弃
+所以把2bit位全部串起来
+'9' 对应ascii 61 binary 111101 最后 2bit 01
+'/'           63        111111           11
+'+'           62        111110           10
+'8'           60        111100           00
+于是可以得到0111100101100001010111110101100101100001010111110111100101000001
+每8bit进行切分,对应ascii得到ya_Ya_yA
+
+没有其他信息了,考虑前面的docm相关知识
+因为'.docm','.docx'本质上都是OOXML(Office Open XML) 压缩包，应该就是ZIP格式
+所以可以直接改后缀成.zip然后解压
+众所周知，带宏的word文档，docm独有：VBA宏编译二进制，就存在word/vbaProject.bin里面
+直奔主题，用olevba可以静态分析，解析提取二进制的vbaProject.bin，得到vba宏的源码
+没有这个工具，如果已经配置了py的系统环境，可以在cmd里面输入
+pip install oletools
+来下载olevba这个工具
+然后进入到"doro的base操作.zip"的解压路径，cmd输入
+olevba word\vbaProject.bin > vba_code.txt
+提取VBA宏的源码
+
+
+
+olevba 0.60.2 on Python 3.14.7 - http://decalage.info/python/oletools
+===============================================================================
+FILE: word\vbaProject.bin
+Type: OLE
+-------------------------------------------------------------------------------
+VBA MACRO ThisDocument.cls 
+in file: word\vbaProject.bin - OLE stream: 'VBA/ThisDocument'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO 模块1.bas 
+in file: word\vbaProject.bin - OLE stream: 'VBA/模块1'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+' 密文存放处。不想一行行复制的话就试试宏功能吧：运行 OutputBase64 宏，会把下面完整的 Base64 一次性输出到文档中。
+Sub OutputBase64()
+    Dim Base64String As String
+    Base64String = ""
+    Base64String = Base64String & "6K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L"
+    Base64String = Base64String & "5ZaE5YWs5q2j5pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95rOV5rK76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li75Y+L5ZaE5pWs5Lia5paH5piO5a+M5by6"
+    Base64String = Base64String & "6K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK75paH5piO5a+M5by6"
+    Base64String = Base64String & "6K+a5L+h6Ieq55Sx5bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5YWs5q2j5pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK75paH5piO5a+M5by6"
+    Base64String = Base64String & "6K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5YWs5q2j5pWs5Lia5rOV5rK75paH5piO5a+M5by6"
+    Base64String = Base64String & "6K+a5L+h6Ieq55Sx5bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5rOV5rK75Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J6K+a5L+h5rCR5Li76K+a5L+h5bmz562J5Y+L5ZaE54ix5Zu954ix5Zu95Y+L5ZaE5bmz562J5rCR5Li754ix5Zu95YWs5q2j5Y+L5ZaE54ix5Zu95rOV5rK76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li75Y+L5ZaE5bmz562J5Y+L5ZaE5pWs5Lia5paH5piO5a+M5by6"
+    Base64String = Base64String & "5Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5rOV5rK75Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J5Y+L5ZaE5pWs5Lia6K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95rOV5rK75Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J6K+a5L+h5rCR5Li75Y+L5ZaE5pWs5Lia5paH5piO5a+M5by6"
+    Base64String = Base64String & "5Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5YWs5q2j5pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5rOV5rK76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li75Y+L5ZaE5bmz562J5Y+L5ZaE5pWs5Lia5Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5YWs5q2j5pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5YWs5q2j5pWs5Lia5rOV5rK75paH5piO5a+M5by6"
+    Base64String = Base64String & "5Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5rOV5rK76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li75Y+L5ZaE5bmz562J6K+a5L+h5bmz562J5Y+L5ZaE54ix5Zu95rOV5rK76K+a5L+h5rCR5Li75Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J5Y+L5ZaE5pWs5Lia5paH5piO5a+M5by6"
+    Base64String = Base64String & "5Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5rOV5rK75Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J6K+a5L+h5rCR5Li76K+a5L+h5bmz562J5Y+L5ZaE54ix5Zu95bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95rOV5rK76K+a5L+h5rCR5Li75Y+L5ZaE5bmz562J6K+a5L+h5rCR5Li75Y+L5ZaE5pWs5Lia5paH5piO5a+M5by6"
+    Base64String = Base64String & "6K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95bmz562J54ix5Zu96K+a5L+h5paH5piO5pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95rOV5rK76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li75Y+L5ZaE5pWs5Lia6K+a5L+h6Ieq55Sx5rOV5rK75Y+L5ZaE5bmz562J6K+a5L+h5rCR5Li76K+a5L+h5rCR5Li75Y+L5ZaE5pWs5Lia5paH5piO5a+M5by6"
+    Base64String = Base64String & "5Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5rOV5rK76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li75Y+L5ZaE5pWs5Lia6K+a5L+h6Ieq55Sx5rOV5rK76K+a5L+h5rCR5Li75Y+L5ZaE5bmz562J6K+a5L+h5rCR5Li75Y+L5ZaE5pWs5Lia5paH5piO5a+M5by6"
+    Base64String = Base64String & "5Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5rOV5rK75Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J5Y+L5ZaE5pWs5Lia5paH5piO5a+M5by6"
+    Base64String = Base64String & "6K+a5L+h6Ieq55Sx5bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu954ix5Zu95Y+L5ZaE5bmz562J5rCR5Li754ix5Zu95YWs5q2j5Y+L5ZaE54ix5Zu95rOV5rK76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li76K+a5L+h5bmz562J5Y+L5ZaE54ix5Zu95rOV5rK75Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J5Y+L5ZaE5pWs5LiaCg=="
+    Selection.TypeText Base64String
+End Sub
+
++----------+--------------------+---------------------------------------------+
+|Type      |Keyword             |Description                                  |
++----------+--------------------+---------------------------------------------+
+|Suspicious|Base64 Strings      |Base64-encoded strings were detected, may be |
+|          |                    |used to obfuscate strings (option --decode to|
+|          |                    |see all)                                     |
++----------+--------------------+---------------------------------------------+
+
+在word里alt+F8，运行Outputbase64宏，得到base64string
+
+给base64string解码，py脚本或者用随波逐流base64解码
+import base64
+b64_data = "6K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5YWs5q2j5pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95rOV5rK76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li75Y+L5ZaE5pWs5Lia5paH5piO5a+M5by66K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK75paH5piO5a+M5by66K+a5L+h6Ieq55Sx5bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5YWs5q2j5pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK75paH5piO5a+M5by66K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5YWs5q2j5pWs5Lia5rOV5rK75paH5piO5a+M5by66K+a5L+h6Ieq55Sx5bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5rOV5rK75Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J6K+a5L+h5rCR5Li76K+a5L+h5bmz562J5Y+L5ZaE54ix5Zu954ix5Zu95Y+L5ZaE5bmz562J5rCR5Li754ix5Zu95YWs5q2j5Y+L5ZaE54ix5Zu95rOV5rK76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li75Y+L5ZaE5bmz562J5Y+L5ZaE5pWs5Lia5paH5piO5a+M5by65Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5rOV5rK75Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J5Y+L5ZaE5pWs5Lia6K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95rOV5rK75Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J6K+a5L+h5rCR5Li75Y+L5ZaE5pWs5Lia5paH5piO5a+M5by65Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5YWs5q2j5pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5rOV5rK76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li75Y+L5ZaE5bmz562J5Y+L5ZaE5pWs5Lia5Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5YWs5q2j5pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5YWs5q2j5pWs5Lia5rOV5rK75paH5piO5a+M5by65Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5rOV5rK76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li75Y+L5ZaE5bmz562J6K+a5L+h5bmz562J5Y+L5ZaE54ix5Zu95rOV5rK76K+a5L+h5rCR5Li75Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J5Y+L5ZaE5pWs5Lia5paH5piO5a+M5by65Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5rOV5rK75Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J6K+a5L+h5rCR5Li76K+a5L+h5bmz562J5Y+L5ZaE54ix5Zu95bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95rOV5rK76K+a5L+h5rCR5Li75Y+L5ZaE5bmz562J6K+a5L+h5rCR5Li75Y+L5ZaE5pWs5Lia5paH5piO5a+M5by66K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95bmz562J54ix5Zu96K+a5L+h5paH5piO5pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95rOV5rK76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li75Y+L5ZaE5pWs5Lia6K+a5L+h6Ieq55Sx5rOV5rK75Y+L5ZaE5bmz562J6K+a5L+h5rCR5Li76K+a5L+h5rCR5Li75Y+L5ZaE5pWs5Lia5paH5piO5a+M5by65Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5rOV5rK76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li75Y+L5ZaE5pWs5Lia6K+a5L+h6Ieq55Sx5rOV5rK76K+a5L+h5rCR5Li75Y+L5ZaE5bmz562J6K+a5L+h5rCR5Li75Y+L5ZaE5pWs5Lia5paH5piO5a+M5by65Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5rOV5rK75Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J5Y+L5ZaE5pWs5Lia5paH5piO5a+M5by66K+a5L+h6Ieq55Sx5bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu954ix5Zu95Y+L5ZaE5bmz562J5rCR5Li754ix5Zu95YWs5q2j5Y+L5ZaE54ix5Zu95rOV5rK76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li76K+a5L+h5bmz562J5Y+L5ZaE54ix5Zu95rOV5rK75Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J5Y+L5ZaE5pWs5LiaCg=="
+plain = base64.b64decode(b64_data).decode("utf-8")
+print(plain)
+
+得到
+诚信自由平等爱国友善法治敬业法治友善爱国平等爱国友善公正敬业法治友善爱国法治诚信自由平等爱国友善法治敬业法治友善爱国法治诚信民主诚信民主诚信民主友善敬业文明富强诚信自由平等爱国友善法治敬业法治诚信自由平等爱国友善法治敬业法治诚信自由平等爱国诚信和谐敬业法治诚信自由平等爱国诚信和谐敬业法治文明富强诚信自由
+平等爱国诚信和谐敬业法治诚信自由平等爱国友善公正敬业法治友善爱国平等爱国友善法治敬业法治诚信自由平等爱国诚信和谐敬业法治文明富强诚信自由平等爱国友善法治敬业法治诚信自由平等爱国诚信和谐敬业法治诚信自由平等爱国诚信和谐敬业法治友善爱国平等爱国友善公正敬业法治文明富强诚信自由平等爱国诚信和谐敬业法治诚信自由
+法治友善平等友善平等诚信民主诚信平等友善爱国爱国友善平等民主爱国公正友善爱国法治诚信民主诚信民主友善平等友善敬业文明富强友善爱国平等爱国友善法治敬业法治诚信自由法治友善平等友善平等友善平等友善敬业诚信自由平等爱国友善法治敬业法治友善爱国法治友善平等友善平等诚信民主友善敬业文明富强友善爱国平等爱国友善公正
+敬业法治诚信自由法治诚信民主诚信民主友善平等友善敬业友善爱国平等爱国友善公正敬业法治诚信自由平等爱国友善公正敬业法治文明富强友善爱国平等爱国友善法治敬业法治友善爱国平等爱国诚信和谐敬业法治诚信自由法治诚信民主诚信民主友善平等诚信平等友善爱国法治诚信民主友善平等友善平等友善敬业文明富强友善爱国平等爱国友善
+法治敬业法治诚信自由法治友善平等友善平等诚信民主诚信平等友善爱国平等爱国诚信和谐敬业法治友善爱国法治诚信民主友善平等诚信民主友善敬业文明富强诚信自由平等爱国友善法治敬业法治友善爱国平等爱国诚信文明敬业法治友善爱国法治诚信民主诚信民主诚信民主友善敬业诚信自由法治友善平等诚信民主诚信民主友善敬业文明富强友善
+爱国平等爱国友善法治敬业法治诚信自由平等爱国友善法治敬业法治诚信自由法治诚信民主诚信民主诚信民主友善敬业诚信自由法治诚信民主友善平等诚信民主友善敬业文明富强友善爱国平等爱国友善法治敬业法治友善爱国平等爱国友善法治敬业法治诚信自由平等爱国友善法治敬业法治诚信自由法治友善平等友善平等友善平等友善敬业文明富强
+诚信自由平等爱国诚信和谐敬业法治友善爱国爱国友善平等民主爱国公正友善爱国法治诚信民主诚信民主诚信民主诚信平等友善爱国法治友善平等友善平等友善平等友善敬业
+
+显然是社会主义核心价值观编码，用随波逐流工具解码，得到题目里提到的南北绿豆编码
+南北南绿 南南南南 南北南南 南南南北 南绿豆绿 南绿南绿 北绿北北 南南绿绿 南绿南绿 南北绿绿 南南绿绿 南南南绿 南豆绿绿
+根据提示，解出来是GUET{开头的字符串
+所以，根据GUET{的ascii码，就可以反推得到南北绿豆这个4进制编码的编码表
+众所周知，4进制1位 = 2bit
+2进制的00,01,10,11 分别对应4进制的一个数字0，1，2，3
+ASCII字符则是8bit，每4个4进制符号 = 8bit = 1个ASCII字符
+G 71 01000111
+U 85 01010101
+E 69 01000101
+T 84 01010100
+
+于是就知道
+G 1 0 1 3
+U 1 1 1 1
+E 1 0 1 1
+T 1 1 1 0
+南对应1，北对应0，绿对应3，只剩一个豆，就是2
+得到了编码表，再解码南北绿豆的字符串
+GUET{w0_wO_Wo再加上前面的ya_Ya_yA，补上下划线和花括号
+就是flag
+GUET{w0_wO_Wo_ya_Ya_yA}

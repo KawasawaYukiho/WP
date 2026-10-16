@@ -1,0 +1,41 @@
+olevba 0.60.2 on Python 3.14.7 - http://decalage.info/python/oletools
+===============================================================================
+FILE: word\vbaProject.bin
+Type: OLE
+-------------------------------------------------------------------------------
+VBA MACRO ThisDocument.cls 
+in file: word\vbaProject.bin - OLE stream: 'VBA/ThisDocument'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO 模块1.bas 
+in file: word\vbaProject.bin - OLE stream: 'VBA/模块1'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+' 密文存放处。不想一行行复制的话就试试宏功能吧：运行 OutputBase64 宏，会把下面完整的 Base64 一次性输出到文档中。
+Sub OutputBase64()
+    Dim Base64String As String
+    Base64String = ""
+    Base64String = Base64String & "6K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L"
+    Base64String = Base64String & "5ZaE5YWs5q2j5pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95rOV5rK76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li75Y+L5ZaE5pWs5Lia5paH5piO5a+M5by6"
+    Base64String = Base64String & "6K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK75paH5piO5a+M5by6"
+    Base64String = Base64String & "6K+a5L+h6Ieq55Sx5bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5YWs5q2j5pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK75paH5piO5a+M5by6"
+    Base64String = Base64String & "6K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5YWs5q2j5pWs5Lia5rOV5rK75paH5piO5a+M5by6"
+    Base64String = Base64String & "6K+a5L+h6Ieq55Sx5bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5rOV5rK75Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J6K+a5L+h5rCR5Li76K+a5L+h5bmz562J5Y+L5ZaE54ix5Zu954ix5Zu95Y+L5ZaE5bmz562J5rCR5Li754ix5Zu95YWs5q2j5Y+L5ZaE54ix5Zu95rOV5rK76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li75Y+L5ZaE5bmz562J5Y+L5ZaE5pWs5Lia5paH5piO5a+M5by6"
+    Base64String = Base64String & "5Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5rOV5rK75Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J5Y+L5ZaE5pWs5Lia6K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95rOV5rK75Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J6K+a5L+h5rCR5Li75Y+L5ZaE5pWs5Lia5paH5piO5a+M5by6"
+    Base64String = Base64String & "5Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5YWs5q2j5pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5rOV5rK76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li75Y+L5ZaE5bmz562J5Y+L5ZaE5pWs5Lia5Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5YWs5q2j5pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5YWs5q2j5pWs5Lia5rOV5rK75paH5piO5a+M5by6"
+    Base64String = Base64String & "5Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5rOV5rK76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li75Y+L5ZaE5bmz562J6K+a5L+h5bmz562J5Y+L5ZaE54ix5Zu95rOV5rK76K+a5L+h5rCR5Li75Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J5Y+L5ZaE5pWs5Lia5paH5piO5a+M5by6"
+    Base64String = Base64String & "5Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5rOV5rK75Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J6K+a5L+h5rCR5Li76K+a5L+h5bmz562J5Y+L5ZaE54ix5Zu95bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95rOV5rK76K+a5L+h5rCR5Li75Y+L5ZaE5bmz562J6K+a5L+h5rCR5Li75Y+L5ZaE5pWs5Lia5paH5piO5a+M5by6"
+    Base64String = Base64String & "6K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95bmz562J54ix5Zu96K+a5L+h5paH5piO5pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95rOV5rK76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li75Y+L5ZaE5pWs5Lia6K+a5L+h6Ieq55Sx5rOV5rK75Y+L5ZaE5bmz562J6K+a5L+h5rCR5Li76K+a5L+h5rCR5Li75Y+L5ZaE5pWs5Lia5paH5piO5a+M5by6"
+    Base64String = Base64String & "5Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5rOV5rK76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li75Y+L5ZaE5pWs5Lia6K+a5L+h6Ieq55Sx5rOV5rK76K+a5L+h5rCR5Li75Y+L5ZaE5bmz562J6K+a5L+h5rCR5Li75Y+L5ZaE5pWs5Lia5paH5piO5a+M5by6"
+    Base64String = Base64String & "5Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu95bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5bmz562J54ix5Zu95Y+L5ZaE5rOV5rK75pWs5Lia5rOV5rK76K+a5L+h6Ieq55Sx5rOV5rK75Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J5Y+L5ZaE5pWs5Lia5paH5piO5a+M5by6"
+    Base64String = Base64String & "6K+a5L+h6Ieq55Sx5bmz562J54ix5Zu96K+a5L+h5ZKM6LCQ5pWs5Lia5rOV5rK75Y+L5ZaE54ix5Zu954ix5Zu95Y+L5ZaE5bmz562J5rCR5Li754ix5Zu95YWs5q2j5Y+L5ZaE54ix5Zu95rOV5rK76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li76K+a5L+h5rCR5Li76K+a5L+h5bmz562J5Y+L5ZaE54ix5Zu95rOV5rK75Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J5Y+L5ZaE5bmz562J5Y+L5ZaE5pWs5LiaCg=="
+    Selection.TypeText Base64String
+End Sub
+
++----------+--------------------+---------------------------------------------+
+|Type      |Keyword             |Description                                  |
++----------+--------------------+---------------------------------------------+
+|Suspicious|Base64 Strings      |Base64-encoded strings were detected, may be |
+|          |                    |used to obfuscate strings (option --decode to|
+|          |                    |see all)                                     |
++----------+--------------------+---------------------------------------------+

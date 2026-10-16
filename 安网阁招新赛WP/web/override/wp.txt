@@ -1,0 +1,67 @@
+============================================================
+  安网阁招新赛 WP —— HTTP Method Override（web）
+============================================================
+
+【题目地址】
+http://211.161.232.122:31478/
+
+【题目描述】
+某系统后端 API 要求必须使用 PATCH 方法提交答案，
+但前端浏览器在表单提交时只能发起 POST 请求。
+听说系统使用了某种 "HTTP 方法覆盖" 机制来解决这个矛盾...
+
+
+【考点】
+HTTP Method Override（HTTP 方法覆盖）——
+通过特定请求头将 POST 请求"伪装"成 PATCH/PUT/DELETE 等其他方法。
+
+
+【解题步骤】
+
+1. 访问首页，看到场景描述：后端要 PATCH，但前端只能 POST。
+2. 访问 /api 查看 API 文档，发现：
+     - GET    /api/check  → 查看端点状态
+     - PATCH  /api/check  → 提交 answer 参数，正确返回 Flag
+     - POST   /api/check  → 临时通道，受限制
+3. 关键：某些 Web 框架支持在请求头中声明"真实请求方法"，
+   常用请求头为：
+       X-HTTP-Method-Override: PATCH
+   这样服务端收到 POST 后会按 PATCH 处理。
+
+4. 用 curl 发送请求：
+   ----------------------------------------------------------
+   curl -X POST http://211.161.232.122:31478/api/check \
+        -H "X-HTTP-Method-Override: PATCH" \
+        -H "Content-Type: application/x-www-form-urlencoded" \
+        -d "answer=override"
+   ----------------------------------------------------------
+
+   响应：
+   {"success": true, "flag": "GUETCTF{h77p_m3th0d_0v3rrid3_1s_d4ng3r0us}"}
+
+5. answer 参数的值就是这种技术的英文名称，全小写：override
+
+
+【踩坑记录】
+- 一开始试了 "Override"（首字母大写）、"MethodOverride"、
+  "method-override"、"X-HTTP-Method-Override" 等都不对。
+- 服务端提示 "HTTP 方法覆盖"，最终确认正确答案是全小写的 override。
+- 注意：必须带 X-HTTP-Method-Override: PATCH 请求头，
+  否则直接 POST 会被拒绝；不带这个头即使 answer 对了也不行。
+
+
+【最终 Flag】
+------------------------------------------------------------
+GUETCTF{h77p_m3th0d_0v3rrid3_1s_d4ng3r0us}
+------------------------------------------------------------
+
+
+【知识点补充】
+- HTTP Method Override（方法覆盖）是一种兼容机制：
+  当客户端（如浏览器）无法直接发送 PUT/PATCH/DELETE 时，
+  通过请求头 X-HTTP-Method-Override（或 X-Method-Override）
+  告知服务端实际期望的方法。
+- 常见支持该机制的框架：Express (method-override 中间件)、
+  Django、Rails 等。
+- 安全风险：如果服务端盲目信任该请求头，可能被攻击者
+  绕过前端权限控制，调用本应受限的 API 方法。

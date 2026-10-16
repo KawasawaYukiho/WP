@@ -1,0 +1,5 @@
+用https://968t.com/tools/gif-extractor/
+提取66全部帧
+在25 33 55可以发现4段flag
+拼接得flag
+flag{Are_they_very_cute?_yes_they_are_really_really_cute_and_i_love_them:3}

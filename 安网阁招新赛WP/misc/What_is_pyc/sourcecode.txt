@@ -1,0 +1,57 @@
+C:\Users\23309>uncompyle6 "C:\Users\23309\Downloads\what_is_pyc.pyc"
+# uncompyle6 version 3.9.3
+# Python bytecode version base 3.7.0 (3394)
+# Decompiled from: Python 3.14.7 (tags/v3.14.7:823f032, Aug  5 2026, 10:51:32) [MSC v.1944 64 bit (AMD64)]
+# Embedded file name: D:\存储\桌面\1.py
+# Compiled at: 2026-08-08 20:23:50
+# Size of source mod 2**32: 1918 bytes
+"""
+底下数字的范围是不是很眼熟
+前面的步骤尝试通过继承链获取 chr
+你会在SSTI的时候再次见到类似的过程
+还不知道什么是SSTI?有空去看看吧:)
+"""
+print("步骤1: 从空字符串开始: ", "")
+cls_str = "".__class__
+print("步骤2: 获取它的类: ", cls_str)
+mro_list = "".__class__.__mro__
+print("步骤3: 获取继承链: ", mro_list)
+obj_class = "".__class__.__mro__[1]
+print("步骤4: 找到 object 基类: ", obj_class)
+subclasses = "".__class__.__mro__[1].__subclasses__()
+print("步骤5: 获取所有子类,object 的子类数量为: ", len(subclasses))
+print("步骤6: 在子类中查找包含 chr 的类...")
+found_class = None
+for idx, cls in enumerate(subclasses):
+    try:
+        if hasattr(cls, "__init__"):
+            globals_dict = cls.__init__.__globals__
+            if "__builtins__" in globals_dict:
+                builtins_obj = globals_dict["__builtins__"]
+                if isinstance(builtins_obj, dict) and "chr" in builtins_obj:
+                    found_class = cls
+                    print(f"   找到! 索引 {idx}, 类名: {cls.__name__}")
+                    break
+                else:
+                    if hasattr(builtins_obj, "chr"):
+                        found_class = cls
+                        print(f"   找到! 索引 {idx}, 类名: {cls.__name__}")
+                        break
+    except:
+        continue
+
+if found_class:
+    print("步骤7: 从该类中取出 chr 函数")
+    builtins_obj = found_class.__init__.__globals__["__builtins__"]
+    if isinstance(builtins_obj, dict):
+        chr_func = builtins_obj["chr"]
+    else:
+        chr_func = getattr(builtins_obj, "chr")
+    print("步骤8: 使用 chr 转换")
+    codes = [97, 110, 95, 101, 122, 95, 112, 121, 99]
+    flag = "".join([chr_func(c) for c in codes])
+    print(f"   结果: {flag}")
+else:
+    print("未找到 chr 函数")
+
+# okay decompiling C:\Users\23309\Downloads\what_is_pyc.pyc

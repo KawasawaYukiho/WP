@@ -1,0 +1,76 @@
+看题目,解压附件,得到index.html  shaoshang.tar  题目说明.txt static文件夹
+先看题目说明，"提示：删除过的文件，并不会真的消失"还有"一个被清理过的容器镜像，藏着她被掩埋的一生"
+
+前置知识:被清理过的容器镜像，删除文件只是标记盖住,归档删除文件中，只是元数据标记删除，文件内容还在tar包内,可以从tar下手恢复被删除的文件
+用7z打开压缩包,查看shaoshang.tar,有.\blobs\sha256\是Docker镜像归档,考虑在kali linux里面用Docker解析
+把shaoshang.tar粘贴到kali的桌面
+下载docker
+sudo apt install docker.io -y
+
+sudo systemctl start docker
+sudo systemctl enable docker    //启动 docker 服务
+
+docker load -i shaoshang.tar    //导入docker镜像
+把shaoshang.tar这个加密解密出来的归档文件，加载到本地Docker里，恢复当时打包的容器文件系统，找回被删掉的flag相关文件
+
+docker images   //导入完成，查看本地镜像
+
+docker create --name tmp_shao 540c6d9324d4 //创建临时容器
+
+docker export tmp_shao > shao_fs.tar    //导出完整文件系统到tar包
+
+mkdir shao_files
+tar -xvf shao_fs.tar -C shao_files  //创建一个叫shao_files的文件夹，把完整文件系统-xvf解压进去
+-x：extract，解压文件
+-v：verbose，详细输出，打印解压出来每一个文件
+-f：file，指定压缩包文件名，-f 后面紧跟文件名
+
+cd shao_files
+ls      //查看文件
+
+cd /home/kali/shao_files/app
+ls -la      //可以发现app是空的，所以转换思路
+
+docker history shaoshang        //查看镜像构建历史 docker history
+
+构建镜像的时候，先把 note.txt、avatar.png、secret.zip复制进容器，然后下一层RUN命令把它们删掉了
+
+导出整个镜像为 tar 包
+cd /home/kali
+docker save -o shaoshang.tar shaoshang
+
+新建 layers 文件夹，解压 tar 包
+mkdir layers
+tar -xf shaoshang.tar -C layers
+cd layers
+ls
+
+我们要的是COPY note.txt avatar.png secret.zip /app/这一层（删除操作的上一层）
+在layer文件夹里面找
+for f in blobs/sha256/*; do echo "==== Checking $f ===="; tar -tf "$f" 2>/dev/null | grep -E "secret.zip|note.txt|avatar.png"; done
+脚本循环读取每一个 blob，列出里面文件，匹配我们需要的三个文件
+
+docker4.png
+
+blob：Binary Large Object 二进制大对象
+对应的blob：blobs/sha256/a4779c7f24ad74e1cf60eeb09297547a8868dfb95b268c20e3baa1220bd37f6
+找到目标 blob 后，单独解压
+tar -xf blobs/sha256/a4779c7f24ad74e1cf60eeb09297547a8868dfb95b268c20e3baa1220bd37f6 -C extract
+
+docker5.png
+
+然后再看extract文件夹，可以得到secret.zip|note.txt|avatar.png三个文件，将他们复制到win里
+看note.txt,有提示"听那段笛声，看那张头像，表象之下，另有乾坤。"图片隐写的意思，用pcrt扫描，PNG Corrupted Repair Tool‌，一个专门用来修复损坏 PNG 图片的工具
+发现在图片末尾拼接了一个wav音频，010editor分离后，把音频放到Audacity看频谱图，有shaoshangxian字样，就是secret.zip的密码
+解压secret.zip得到cipher.txt
+U2FsdGVkX19+CXEIqBnJ3IrZKSjIDDa0YYTAhmRVFnGVylTvnEoYPIA2bf7m/i/V
+j3BcTxHO4qHLDBkpOabQRCatoARS/sae7/84hlNvrdU=
+U2FsdGVkX1解码是Salted__，明显的加盐AES-256-CBC密文
+
+还有note.txt里的提示，"若还要解开最后一把锁，且问她这一生，爱憎可分明？"
+尝试口令aizengfenming
+在网站https://emn178.github.io/online-tools/aes/decrypt/进行计算，得到flag
+
+flag.png
+
+GUET{Riding alone, roaming freely across the world}

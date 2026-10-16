@@ -1,0 +1,1 @@
+flag{jadx_r3v3rs1ng_m4st3r_0r_4ndr01d}

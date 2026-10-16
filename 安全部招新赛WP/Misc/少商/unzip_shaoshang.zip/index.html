@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>少商 · 星河叹</title>
+<style>
+  :root {
+    --ink: #f0ece4;
+    --muted: #b8b0a4;
+    --accent: #e8a87c;
+    --accent-soft: rgba(232, 168, 124, 0.15);
+    --card-bg: rgba(18, 16, 14, 0.78);
+    --line: rgba(232, 168, 124, 0.25);
+    --ok: #6fd4a8;
+    --err: #e07a7a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #0a0a0f url('static/background.jpg') center/cover no-repeat fixed;
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    position: relative;
+  }
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse at center, rgba(10,10,15,0.35) 0%, rgba(10,10,15,0.72) 100%);
+    pointer-events: none;
+  }
+  .card {
+    position: relative;
+    background: var(--card-bg);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    max-width: 600px;
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 36px 36px 32px;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.5);
+    max-height: 92vh;
+    overflow-y: auto;
+  }
+  h1 { font-size: 32px; font-weight: 600; letter-spacing: 2px; color: var(--accent); }
+  .sub { color: var(--muted); font-size: 14px; margin-top: 6px; letter-spacing: 1px; }
+  .divider { height: 1px; background: var(--line); margin: 20px 0; }
+  .story { font-size: 15px; line-height: 1.85; color: var(--ink); }
+  .story p { margin-bottom: 8px; }
+  .hint {
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--accent);
+    line-height: 1.7;
+  }
+  .player {
+    margin-top: 20px;
+    padding: 16px;
+    background: rgba(10, 10, 15, 0.5);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+  .player-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  #playBtn {
+    padding: 10px 18px;
+    background: var(--accent);
+    color: #1a1a1a;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    letter-spacing: 1px;
+  }
+  #playBtn:hover { opacity: .88; }
+  #timeLabel { font-size: 13px; color: var(--muted); font-family: "Consolas", monospace; }
+  .lyrics {
+    max-height: 340px;
+    overflow-y: auto;
+    border-top: 1px solid var(--line);
+    padding-top: 8px;
+  }
+  .lyric {
+    padding: 7px 10px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #c9c2b6;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background .15s, color .15s;
+  }
+  .lyric:hover { background: rgba(232,168,124,0.08); color: var(--ink); }
+  .lyric.active { color: var(--ink); font-weight: 500; }
+  .lyric.active::before { content: "♪ "; color: var(--accent); }
+  .lyric.key { color: var(--accent); font-weight: 600; }
+  .lyric.key.active { color: var(--accent); }
+  .lyrics .legend {
+    padding: 8px 10px 4px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .btn {
+    display: block;
+    text-align: center;
+    margin-top: 18px;
+    padding: 13px;
+    background: var(--accent);
+    color: #1a1a1a;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    transition: opacity .15s;
+  }
+  .btn:hover { opacity: .88; }
+  .file-note {
+    margin-top: 18px;
+    padding: 12px 14px;
+    background: rgba(10,10,15,0.4);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .file-note b { color: var(--ink); font-weight: 600; }
+  .submit { margin-top: 18px; }
+  .submit label { font-size: 13px; color: var(--muted); }
+  .submit p { font-size: 13px; color: var(--muted); line-height: 1.7; margin-top: 8px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>《少商》</h1>
+    <p class="sub">—— 星河叹 · 程少商的一生</p>
+    <div class="divider"></div>
+    <div class="story">
+      <p>她是程家四娘子，生来便被留在乡野，无人问津。</p>
+      <p>一个被清理过的容器镜像，藏着她被掩埋的一生。</p>
+      <p>flag，就是她——程少商——真实的一生。</p>
+    </div>
+    <div class="hint">
+      提示：删除过的文件，并不会真的消失；她的名字，取自神农之琴的一根弦。
+      听她的歌——重点歌词里，藏着解开每一道锁的钥匙。
+    </div>
+
+    <div class="player">
+      <div class="player-head">
+        <button id="playBtn" onclick="togglePlay()">▶ 播放</button>
+        <span id="timeLabel">00:00 / 00:00</span>
+      </div>
+      <div class="lyrics" id="lyrics">
+        <div class="legend">点击任意一句歌词，从那一句开始听 · <span style="color:var(--accent)">橙色=关键提示</span></div>
+      </div>
+    </div>
+    <audio id="song" src="static/song_full.mp3" preload="metadata"></audio>
+
+    <div class="file-note">
+      <b>档案：</b>shaoshang.tar 与她的一生，就在这个文件夹里，和这首歌放在一起。
+    </div>
+    <div class="submit">
+      <label for="flag">flag</label>
+      <p>解出形如 <span style="color:var(--accent)">GUET{...}</span> 的 flag 后，提交到比赛平台。</p>
+    </div>
+  </div>
+
+<script>
+  const LYRICS = [
+    { t: 28.28, text: "遥啊遥楚天阔" },
+    { t: 33.09, text: "盼明月满星河" },
+    { t: 39.78, text: "一念拂袖花落" },
+    { t: 44.80, text: "谈笑间起风波" },
+    { t: 51.11, text: "飘啊飘无奈何" },
+    { t: 56.30, text: "叹恩怨难割舍" },
+    { t: 62.66, text: "是非乌有交错", key: true },
+    { t: 67.98, text: "微微燃心中火" },
+    { t: 76.40, text: "是谁笑我人如槊 心如漠" },
+    { t: 82.33, text: "是谁叹我一身胆 忍离合" },
+    { t: 88.11, text: "长路漫漫长漂泊 夜萧瑟" },
+    { t: 93.89, text: "风又起 雨又落" },
+    { t: 101.87, text: "我笑青山依旧 风雨捉不透" },
+    { t: 108.33, text: "我叹人生苦短 荒唐事不休" },
+    { t: 114.17, text: "我盼孤身纵马 笛声漫天 四海任我游", key: true },
+    { t: 119.84, text: "情字如雨落 沾满了红袖" },
+    { t: 151.14, text: "是谁笑我人如槊 心如漠" },
+    { t: 157.55, text: "是谁叹我一身胆 忍离合" },
+    { t: 163.36, text: "长路漫漫长漂泊 夜萧瑟" },
+    { t: 169.00, text: "风又起 雨又落" },
+    { t: 177.11, text: "我笑青山依旧 风雨捉不透" },
+    { t: 183.53, text: "我叹人生苦短 荒唐事不休" },
+    { t: 189.22, text: "我盼孤身纵马 笛声漫天 四海任我游", key: true },
+    { t: 195.15, text: "情字如雨落 沾满了红袖" },
+    { t: 200.21, text: "我笑尘缘如梦 镜花一场空", key: true },
+    { t: 206.56, text: "我叹聚散无由 何处能相逢" },
+    { t: 212.45, text: "我盼风云万里 星汉灿烂 爱恨一笑过" },
+    { t: 218.39, text: "天地路悠悠 凌波入我眸" },
+    { t: 224.09, text: "天地路悠悠 凌波入我眸" },
+  ];
+
+  const audio = document.getElementById('song');
+  const playBtn = document.getElementById('playBtn');
+  const timeLabel = document.getElementById('timeLabel');
+  const lyricBox = document.getElementById('lyrics');
+
+  function fmt(s) {
+    s = Math.floor(s || 0);
+    const m = Math.floor(s / 60), sec = s % 60;
+    return String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+  }
+
+  function renderLyrics() {
+    LYRICS.forEach((l, i) => {
+      const el = document.createElement('div');
+      el.className = 'lyric' + (l.key ? ' key' : '');
+      el.textContent = l.text;
+      el.onclick = () => jumpTo(i);
+      lyricBox.appendChild(el);
+    });
+  }
+
+  function setPlaying(p) {
+    playBtn.textContent = p ? '⏸ 暂停' : '▶ 播放';
+  }
+
+  function togglePlay() {
+    if (audio.paused) {
+      audio.play().then(() => setPlaying(true)).catch(() => {});
+    } else {
+      audio.pause();
+      setPlaying(false);
+    }
+  }
+
+  function jumpTo(i) {
+    audio.currentTime = LYRICS[i].t;
+    audio.play().then(() => setPlaying(true)).catch(() => {});
+  }
+
+  audio.addEventListener('loadedmetadata', () => {
+    timeLabel.textContent = '00:00 / ' + fmt(audio.duration);
+  });
+
+  audio.addEventListener('timeupdate', () => {
+    timeLabel.textContent = fmt(audio.currentTime) + ' / ' + fmt(audio.duration);
+    let idx = 0;
+    for (let i = 0; i < LYRICS.length; i++) {
+      if (LYRICS[i].t <= audio.currentTime) idx = i;
+    }
+    const els = lyricBox.querySelectorAll('.lyric');
+    els.forEach((el, i) => {
+      el.classList.toggle('active', i === idx);
+    });
+  });
+
+  audio.addEventListener('ended', () => setPlaying(false));
+
+  renderLyrics();
+</script>
+</body>
+</html>

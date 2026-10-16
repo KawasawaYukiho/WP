@@ -1,0 +1,29 @@
+（用到的四种密码：凯撒密码、培根密码、维吉尼亚密码、Base64 换表）
+
+密文：
+ccwyjLHxxxcec1kkkxfncyyuj1Dxxxcrc1kjkKpbcywujLDxxxmec1kjkxfbccwyjLDcxtmrc1kkkKfbccwyj1Dxxxcec1kkkKpncyyujLDxxxcrvykkkxpbccwujLHcxtcrvykkkKfb
+
+====================================================================
+表1（64 个字符，Base64 用的自定义字母表）：
+qwertyuiopasdfghjklzxcvbnmABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/
+
+   说明：表1 的第 i 个字符，替代标准 Base64 表
+   ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/
+   里的第 i 个字符，"=" 补位照旧。
+
+表2（标准培根表，24 个字母：i/j 共用一组、u/v 共用一组）：
+   a AAAAA    b AAAAB    c AAABA    d AAABB
+   e AABAA    f AABAB    g AABBA    h AABBB
+   i/j ABAAA  k ABAAB    l ABABA    m ABABB
+   n ABBAA    o ABBAB    p ABBBA    q ABBBB
+   r BAAAA    s BAAAB    t BAABA    u/v BAABB
+   w BABAA    x BABAB    y BABBA    z BABBB
+
+便签（小明的加密参数，怕自己忘了所以记在这里）：
+   凯撒密码的位移量 = 7
+   维吉尼亚密码的密钥 = MIXUP
+====================================================================
+
+提示：
+加密是从里往外包的，解密就得从外往里剥，解密出来的答案为小写，提交需要包裹上flag{}。
+

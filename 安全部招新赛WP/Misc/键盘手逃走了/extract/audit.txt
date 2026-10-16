@@ -1,0 +1,29 @@
+Foremost version 1.5.7 by Jesse Kornblum, Kris Kendall, and Nick Mikus
+Audit File
+
+Foremost started at Thu Sep 10 00:14:19 2026
+Invocation: foremost -i Desktop/dist/Viola.jpg -o Desktop/extract 
+Output directory: /home/kali/Desktop/extract
+Configuration file: /etc/foremost.conf
+------------------------------------------------------------------
+File: Desktop/dist/Viola.jpg
+Start: Thu Sep 10 00:14:19 2026
+Length: 2 MB (2409680 bytes)
+ 
+Num	 Name (bs=512)	       Size	 File Offset	 Comment 
+
+0:	00000000.jpg 	     252 KB 	          0 	 
+1:	00001172.jpg 	     166 KB 	     600325 	 
+2:	00000504.zip 	       2 MB 	     258300 	 
+3:	00000505.png 	     333 KB 	     258668 	  (745 x 673)
+4:	00001506.png 	     740 KB 	     771234 	  (1920 x 1080)
+Finish: Thu Sep 10 00:14:19 2026
+
+5 FILES EXTRACTED
+	
+jpg:= 2
+zip:= 1
+png:= 2
+------------------------------------------------------------------
+
+Foremost finished at Thu Sep 10 00:14:19 2026

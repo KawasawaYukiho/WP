@@ -1,0 +1,180 @@
+获取.exe文件,先用IDE查壳,看PE基础信息,可以知道是64位的控制台程序,黑窗口,无壳,不需要脱壳
+image1.png
+
+直接用IDA64反汇编就可以
+
+在IDA打开后,先找main或者start,在main里发现主函数
+按F5看c伪代码
+
+int __cdecl main(int argc, const char **argv, const char **envp)
+{
+  __int64 v3; // rdx
+  __int64 v4; // r8
+  int v5; // ebx
+  int v6; // edi
+  char v7; // cl
+  char *v8; // r10
+  unsigned int v9; // er9
+  char v10; // al
+  char v11; // dl
+  unsigned __int8 v12; // bl
+  char *v13; // rcx
+  char v14; // al
+  unsigned __int64 i; // rdi
+  char Str[128]; // [rsp+20h] [rbp-88h] BYREF
+
+  sub_1400049B8("Input your route:", argv, envp);
+  if ( (unsigned int)sub_140001190("%127s", Str) == 1 )
+  {
+    v5 = 1;
+    v6 = 1;         //v5v6分别是横纵坐标,x轴向右延申,y轴向下,这里程序说了起点是(1,1)
+    if ( strlen(Str) == 19 )
+    {
+      v7 = Str[0];
+      if ( Str[0] )
+      {
+        v8 = Str;       //v8是人在.exe程序输入的字符串的第一个字符
+        v4 = 1i64;      //v4是y坐标副本，同步增减，用于越界判断 >0xA
+        v9 = 1;         //x 坐标副本，同步增减，用于越界判断 >0xA
+        while ( 1 )
+        {
+          switch ( v7 )
+          {
+            case 'a':
+              --v5;
+              --v9;
+              break;
+            case 'd':
+              ++v5;
+              ++v9;
+              break;
+            case 's':
+              ++v6;
+              v4 = (unsigned int)(v4 + 1);
+              break;
+            case 'w':
+              --v6;
+              v4 = (unsigned int)(v4 - 1);
+              break;        //这里是程序的移动逻辑,wasd分别是上左下右
+            default:
+              goto LABEL_25;
+          }
+          if ( v9 > 0xA )
+            break;
+          if ( (unsigned int)v4 > 0xA )
+            break;
+          v3 = byte_140017350[(__int64)(v5 + 11 * v6) >> 3];
+          LOBYTE(v3) = (unsigned __int8)(v3 ^ 0xA7) >> ((v5 + 11 * v6) & 7);
+          if ( (v3 & 1) != 0 )          //程序在这里判断是不是撞到了墙，走一步判断一次
+            break;                     // bit ==1 → 当前位置撞墙，退出循环
+          v10 = *++v8;
+          v7 = v10;
+          if ( !v10 )
+          {
+            if ( v5 != 8 || v6 != 9 )       //这里给出了迷宫的终点是(8,9)
+              break;
+            sub_1400049B8("correct", v3, v4);
+            v11 = Str[0];
+            v12 = 66;
+            if ( Str[0] )
+            {
+              v13 = Str;
+              do
+              {
+                v14 = *++v13;
+                v12 = v11 ^ __ROR1__(v12, 7);
+                v11 = v14;
+              }
+              while ( v14 );
+            }
+            for ( i = 0i64; i < 0x15; ++i )
+              j__fputchar(v12 ^ (unsigned __int8)i ^ byte_140017350[i + 16]);   //这里是伪代码里的解码逻辑
+            j__fputchar(10);
+            return 0;
+          }
+        }
+      }
+    }
+  }
+LABEL_25:
+  sub_1400049B8("wrong", v3, v4);
+  return 0;
+}
+
+意思就是
+读取输入字符串,检验必须19个字符，走到
+终点坐标(8,9),全程不撞墙,校验通过才会用输入
+字符串计算密钥 v12 → 循环异或输出 flag；校验失败直接输出wrong
+但是直接在.exe程序里输入什么都没有反应???
+
+地图数据存在了byte_140017350里,进行查看和绘图
+byte_140017350:
+map_data = [0x58, 0x28, 0x47, 0xD2, 0x84, 0x7D, 0x70, 0x07, 
+            0xD1, 0x12, 0x2F, 0x52, 0xAA, 0x47, 0x58, 0xA6, 0~15：迷宫结构16字节
+            0x3D, 0x3E, 0x24, 0x33, 0x32, 0x0B, 0x1E, 0x13, 16往后：密文，一共21字节
+            0x07, 0x19, 0x20, 0x0E, 0x18, 0x0A, 0x08, 0x1F, 
+            0x17, 0x3B, 0x08, 0x0D, 0x1C]
+
+是地图的解密逻辑,把map_data里的0~15个数据翻译成地图
+
+
+在map.py里,得到迷宫的地图
+
+迷宫地图 (S=起点(1,1), E=终点(8,9), #=墙, .=通路):
+    0 1 2 3 4 5 6 7 8 910
+ 0  # # # # # # # # # # #
+ 1  # S . . # . . . . . #
+ 2  # # # . # . # # # . #
+ 3  # . . . # . . . # . #
+ 4  # . # # # # # . # . #
+ 5  # . . . . . # . # . #
+ 6  # . # # # . # . # . #
+ 7  # . # . . . # . . . #
+ 8  # . # . # # # # # . #
+ 9  # . . . . . . . E . #
+10  # # # # # # # # # # #
+
+于是可以得到路径是
+ddssaassssssddddddd
+
+
+伪代码中map_data的第17个数据一直到末尾是 flag 加密后的密文
+这里是伪代码里的解码逻辑
+for(i = 0; i < 0x15; i++){
+    putchar( v12 ^ (unsigned __int8)i ^ map_data[i+16] );
+}
+
+'^'  就是按位异或XOR
+v12是单字节密钥，由正确的路径经过ROR循环算出，8位
+__ROR1__(v12,7)这个操作中，ROR是循环右移操作，1是指每次循环右移 1 bit，v12是被操作的数，7是指进行7次循环右移
+例如一个8bit，10110100，经过__ROR1__(xx,7)这个操作后，得到的是01101001，将右侧7bit移到左侧，并且原本最左侧的1，移到了最右边
+(unsigned __int8)i  强制类型转换，把64位的 i 截断，只保留最低8个bit，变成1字节无符号数
+
+由此，我们就可以根据得到的路径，从而计算出v12的值，进一步算出flag
+
+v11 = *v13;        // v13初始指向route字符串首字符，v11 = route[0]
+v12 = 0x42;        // v12初始值 = 66
+do
+{
+    v14 = *++v13;  // 自增：指针先+1，取下一个字符
+    v12 = v11 ^ __ROR1__(v12, 7);        // __ROR1__(v12,7)：8bit循环右移7位
+    v11 = v14;
+} while (v14);     // v14 == 0（读到字符串结束'\0'）时退出循环
+
+算出的v12的值是v12 = 0x75，也就是十进制的112
+带入flag的解密代码
+for(i = 0; i < 0x15; i++){
+    putchar( v12 ^ (unsigned __int8)i ^ map_data[i+16] );
+}
+
+flag.py
+
+用解码逻辑进行解码，得到flag
+HJSEC{maze_parser_ok}
+
+
+新发现,在cmd中运行不会直接关闭窗口,可以输入正确路径后得到flag
+image2.png
+
+
+

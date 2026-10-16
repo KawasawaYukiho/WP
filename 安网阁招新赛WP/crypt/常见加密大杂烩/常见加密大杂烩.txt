@@ -1,0 +1,80 @@
+============================================================
+  安网阁招新赛 WP —— 常见密码加密大杂烩（crypt）
+============================================================
+
+【题目描述】
+用到的四种密码：凯撒密码、培根密码、维吉尼亚密码、Base64 换表
+密文：
+ccwyjLHxxxcec1kkkxfncyyuj1Dxxxcrc1kjkKpbcywujLDxxxmec1kjkxfbccwyjLDcxtmrc1kkkKfbccwyj1Dxxxcec1kkkKpncyyujLDxxxcrvykkkxpbccwujLHcxtcrvykkkKfb
+
+参数：
+  - 自定义 Base64 表：qwertyuiopasdfghjklzxcvbnmABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/
+  - 培根表（i/j 共用，u/v 共用）
+  - 凯撒位移 = 7
+  - 维吉尼亚密钥 = MIXUP
+
+提示：加密从里往外包，解密从外往里剥。
+
+
+【解题思路】
+四层加密嵌套，外层是 Base64 换表，往里依次是凯撒、维吉尼亚、培根。
+按照"从外往里剥"的顺序逐层解密即可。
+
+
+【详细步骤】
+
+第 1 层：Base64 换表解码
+------------------------------------------------------------
+标准 Base64 表：ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/
+自定义表：    qwertyuiopasdfghjklzxcvbnmABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/
+
+把密文里的每个字符，按自定义表的位置 i，映射成标准表第 i 个字符，
+再做标准 Base64 解码。
+
+结果：
+  UPEBXTQEBWTQECXTQFCWTQECWTPFBWTPFBWTQFBWTPECWUPEBWUPFCWTQFCWUPECWTQEBWTQFBXTQFBWTQECXTQEBWUPFBXUPECXTQFCW
+
+
+第 2 层：凯撒解密（位移 7，往回移 7 位）
+------------------------------------------------------------
+对上面的大写字母串，每个字母往前移 7 位（A->T, B->U, ..., H->A, ...）。
+
+结果：
+  NIXUQMJXUPMJXVQMJYVPMJXVPMIYUPMIYUPMJYUPMIXVPNIXUPNIYVPMJYVPNIXVPMJXUPMJYUQMJYUPMJXVQMJXUPNIYUQNIXVQMJYVP
+
+
+第 3 层：维吉尼亚解密（密钥 MIXUP）
+------------------------------------------------------------
+密钥 MIXUP 循环使用：M=12, I=8, X=23, U=20, P=15
+每个字符减去对应密钥位（模 26）。
+
+结果（只剩 A 和 B 两种字符，正是培根密码的输入）：
+  BAAABABAAAABABBABBBAABABAAABAAAABAAABBAAAAABABAAAABABBAABBBABAABAABAAAABBABABBAAABABBABAAABABABBAABBABBBA
+
+
+第 4 层：培根密码解码
+------------------------------------------------------------
+培根密码每个字母用 5 个 A/B 表示。按 5 个一组切分，对照培根表查表。
+
+培根表：
+  a AAAAA    b AAAAB    c AAABA    d AAABB
+  e AABAA    f AABAB    g AABBA    h AABBB
+  i/j ABAAA  k ABAAB    l ABABA    m ABABB
+  n ABBAA    o ABBAB    p ABBBA    q ABBBB
+  r BAAAA    s BAAAB    t BAABA    u/v BAABB
+  w BABAA    x BABAB    y BABBA    z BABBB
+
+逐组查表结果：
+  s i m p l e e n c r y p t i o n m i x u p
+
+
+【最终 Flag】
+------------------------------------------------------------
+flag{simpleencryptionmixup}
+
+（"simple encryption mix up" —— 简单加密大杂烩，和题目名呼应）
+
+
+【附：解密脚本（Python）】
+------------------------------------------------------------
+

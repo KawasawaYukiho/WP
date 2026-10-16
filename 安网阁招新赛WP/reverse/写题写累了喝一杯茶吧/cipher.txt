@@ -1,0 +1,20 @@
+.rdata:0000000140004000 cipher          db  89h                 ; DATA XREF: check_flag+62↑o
+.rdata:0000000140004001                 db  73h ; s
+.rdata:0000000140004002                 db  95h
+.rdata:0000000140004003                 db  16h
+.rdata:0000000140004004                 db  2Ch ; ,
+.rdata:0000000140004005                 db 0E9h
+.rdata:0000000140004006                 db 0A7h
+.rdata:0000000140004007                 db 0B8h
+.rdata:0000000140004008                 db  8Eh
+.rdata:0000000140004009                 db  14h
+.rdata:000000014000400A                 db 0BBh
+.rdata:000000014000400B                 db 0D3h
+.rdata:000000014000400C                 db 0BAh
+.rdata:000000014000400D                 db  54h ; T
+.rdata:000000014000400E                 db  3Ah ; :
+.rdata:000000014000400F                 db 0E6h
+.rdata:0000000140004010 delta           db 0B9h
+.rdata:0000000140004011                 db  79h ; y
+.rdata:0000000140004012                 db  37h ; 7
+.rdata:0000000140004013                 db  9Eh

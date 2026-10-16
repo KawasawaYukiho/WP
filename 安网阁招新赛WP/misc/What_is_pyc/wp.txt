@@ -1,0 +1,111 @@
+============================================================
+  安网阁招新赛 WP —— 什么是 pyc？（misc）
+============================================================
+
+【题目描述】
+你知道什么是 pyc 文件吗？你能将它还原成原来的样子吗？
+（结果用 flag{} 包裹）
+
+【附件】what_is_pyc.pyc（1620 字节，Python 3.11 编译）
+
+
+【知识点】
+.pyc 是 Python 编译后的字节码文件。
+Python 运行时会把 .py 源码编译成 .pyc 缓存，加快加载。
+.pyc 不是源码，但可以通过反编译工具还原成 .py。
+
+.pyc 文件结构（Python 3.7+）：
+  - 4 字节 magic number（标识 Python 版本）
+  - 4 字节 bit field
+  - 4 字节 mtime
+  - 4 字节 source size
+  - 之后是 marshal 序列化的 code object
+
+
+【解题步骤】
+
+1. 识别文件
+   ----------------------------------------------------------
+   $ file what_is_pyc.pyc
+   Python 3.11 bytecode (magic 3394)
+   ----------------------------------------------------------
+
+2. 反编译（uncompyle6）
+   ----------------------------------------------------------
+   $ uncompyle6 what_is_pyc.pyc
+   ----------------------------------------------------------
+   直接还原出完整 .py 源代码。
+
+3. 反编译后核心代码：
+   ----------------------------------------------------------
+   # 前面一大段是 SSTI 利用链演示：
+   # 从空字符串 -> __class__ -> __mro__ -> object
+   # -> __subclasses__() -> 遍历找 __builtins__ -> 取出 chr 函数
+
+   # 关键部分在最后：
+   codes = [97, 110, 95, 101, 122, 95, 112, 121, 99]
+   flag = "".join([chr_func(c) for c in codes])
+   print(f"   结果: {flag}")
+   ----------------------------------------------------------
+
+4. 把 codes 数组转成字符：
+   97=a  110=n  95=_  101=e  122=z  95=_  112=p  121=y  99=c
+   -> an_ez_pyc
+
+
+【反编译后完整代码（注释版）】
+----------------------------------------------------------
+"""
+底下数字的范围是不是很眼熟
+前面的步骤尝试通过继承链获取 chr
+你会在SSTI的时候再次见到类似的过程
+"""
+
+# 演示 SSTI 中常用的继承链利用：
+cls_str = "".__class__                    # str 类
+mro_list = "".__class__.__mro__           # 继承链
+obj_class = "".__class__.__mro__[1]        # object 基类
+subclasses = obj_class.__subclasses__()   # object 的所有子类
+
+# 遍历子类，找哪个类的 __init__.__globals__ 里有 __builtins__
+# 从而取出 chr 函数（SSTI 中无法直接用 chr 时的经典绕过手法）
+for idx, cls in enumerate(subclasses):
+    try:
+        if hasattr(cls, "__init__"):
+            globals_dict = cls.__init__.__globals__
+            if "__builtins__" in globals_dict:
+                builtins_obj = globals_dict["__builtins__"]
+                if isinstance(builtins_obj, dict) and "chr" in builtins_obj:
+                    chr_func = builtins_obj["chr"]
+                    break
+    except:
+        continue
+
+# 用取到的 chr 函数把数字数组转成字符串
+codes = [97, 110, 95, 101, 122, 95, 112, 121, 99]
+flag = "".join([chr_func(c) for c in codes])
+print(flag)   # an_ez_pyc
+----------------------------------------------------------
+
+
+【最终 Flag】
+----------------------------------------------------------
+flag{an_ez_pyc}
+----------------------------------------------------------
+
+
+【常用工具】
+- uncompyle6    : 老牌反编译器，支持 Python 2.7 - 3.8
+- decompyle3    : uncompyle6 的 fork
+- pycdc         : C++ 写的反编译器，支持最新 Python 版本
+- dis (标准库)   : Python 自带反汇编模块
+- marshal (标准库): 读取 .pyc 中的 code object
+- strings       : 直接提取明文字符串
+
+
+【Tips】
+- 不同 Python 版本 magic number 不同，反编译工具要对应版本
+- 如果当前 Python 版本和 pyc 版本差太多，marshal.load 会报错
+  这时直接用 uncompyle6（它内部用 xdis 兼容多版本）
+- 这道题表面是 SSTI 利用链教学，实际 flag 藏在最后的数字数组里
+- 数字数组 [97,110,95,...] 就是 ASCII 码，直接 chr() 出来即可

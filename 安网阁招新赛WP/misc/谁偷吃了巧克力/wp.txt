@@ -1,0 +1,46 @@
+找到了！直接看 **Packet 46**，这是决定性证据。
+
+## 破案结果
+
+### 偷吃者：**Charlie**（192.168.1.12 / MAC `00:11:22:33:44:03`）
+
+### 证据链
+
+流量里有四个人访问零食小站 `snack.corp.local`：
+
+表格
+
+| IP | 身份 | 行为 | 服务器页面描述 |
+| --- | --- | --- | --- |
+| 192.168.1.10 | Alice | 只浏览了 `/chocolate` | "Alice 看了看，没有偷吃..." |
+| 192.168.1.11 | Bob | 浏览了 cookie、candy | "Bob 似乎更喜欢饼干..." / "Bob 过来转了一圈就走了" |
+| **192.168.1.12** | **Charlie** | **POST 了 `/eat`** | **巧克力库存从 3 盒变成 2 盒** |
+| 192.168.1.13 | David | 浏览了 candy、cookie | "David 只是来看看糖果的..." |
+
+### 关键包（Packet 46）
+
+```
+POST /eat HTTP/1.1
+Host: snack.corp.local
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 83
+
+item=chocolate&secret=flag%7BCh4rli3_4t3_th3_ch0c0l4t3%7D&eater=Charlie&mood=hungry
+```
+
+URL 解码后：
+
+```
+item=chocolate
+secret=flag{Ch4rli3_4t3_th3_ch0c0l4t3}
+eater=Charlie
+mood=hungry
+```
+
+## Flag
+
+```
+flag{Ch4rli3_4t3_th3_ch0c0l4t3}
+```
+
+就是 "Charlie ate the chocolate" 的 leetspeak 写法。Charlie 饿了，对着巧克力专区点了 "偷吃一块巧克力" 按钮，POST 请求里直接把 secret 也带出来了

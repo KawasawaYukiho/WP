@@ -1,0 +1,6 @@
+下载两个附件
+各在文件最后可以发现两半的flag
+image1.png
+image2.png
+拼接得到flag
+flag{Y0u_h4v3_4lr34dy_und3r5t00d_h0w_t0_5ubm1t_th3_WP}
